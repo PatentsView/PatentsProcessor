@@ -1,3 +1,4 @@
+"""
 Copyright (c) 2013 The Regents of the University of California, AMERICAN INSTITUTES FOR RESEARCH
 All rights reserved.
 
@@ -21,3 +22,16 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+"""
+"""
+@author Gabe Fierro gt.fierro@berkeley.edu github.com/gtfierro
+"""
+class Patobj(object):
+    pass
+
+class PatentHandler(object):
+    def get_patobj(self):
+        patobj = Patobj()
+        for attr in self.attributes:
+            patobj.__dict__[attr] = getattr(self, attr)
+        return patobj
