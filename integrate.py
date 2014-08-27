@@ -72,7 +72,12 @@ def integrate(disambig_input_file, disambig_output_file):
     disambig_output[0] = disambig_output[0].apply(str)
     print 'finished loading csvs'
     merged = pd.merge(disambig_input, disambig_output, on=0)
-    merged.columns = ['rawinventor_uuid','isgrant','granted','name_first','name_middle','name_last','patent_id','mainclass','subclass','city','state','country','assignee','rawassignee','prev_inventorid','current_inventorid']
+    # If there are any prior_inventor_ids at all, then the merge will have 15 columns. Otherwise, if there are not any
+    # prior_inventor_ids, then the merge will not have a column for it and there will be only 14 columns.
+    if disambig_input.shape[1] > 14:
+        merged.columns = ['rawinventor_uuid','isgrant','granted','name_first','name_middle','name_last','patent_id','mainclass','subclass','city','state','country','assignee','rawassignee','prev_inventorid','current_inventorid']
+    else:
+        merged.columns = ['rawinventor_uuid','isgrant','granted','name_first','name_middle','name_last','patent_id','mainclass','subclass','city','state','country','assignee','rawassignee','current_inventorid']
     print 'finished merging'
     apps = merged[merged['isgrant'] == 0]
 

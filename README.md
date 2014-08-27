@@ -11,10 +11,11 @@ report](https://github.com/funginstitute/publications/raw/master/patentprocessor
 
 For a description of configuration of the patentprocessor toolchain, please see
 [this technical
-report](https://github.com/funginstitute/publications/raw/master/weeklyupdate/weeklyupdate.pdf).
+report](https://github.com/funginstitute/publications/raw/master/weeklyupdate/weeklyupdate.pdf). Note that the
+current version of the code has been ported to Windows while the technical report references Mac OS X.
 
 To follow development, subscribe to
-[RSS feed](https://github.com/funginstitute/patentprocessor/commits/master.atom).
+[RSS feed](https://github.com/CSSIP-AIR/PatentsProcessorr/commits/master.atom).
 
 ## Patentprocessor Overview
 
@@ -29,30 +30,9 @@ There are several steps in the patentprocessor toolchain:
 5. Disambiguate inventors (external process)
 6. Ingest disambiguated inventors into database
 
-For the preliminary disambiguations, you need the [location
-database](https://s3.amazonaws.com/fungpatdownloads/geolocation_data.7z). File
-requires [7zip](http://www.7-zip.org/) to unpack.
-
 ## Installation and Configuration of the Preprocessing Environment
 
-The python-based preprocessor is tested on Ubuntu 12.04 and MacOSX 10.6.  Any
-flavor of Unix with the following installed should work, though it is possible
-to get the toolchain running on Windows.
+The python-based preprocessor is tested on Windows 2012 R2 Standard; originally it was 
+developed and tested on Ubuntu 12.04 and MacOSX 10.6, but has since been ported.
 
-If you have [`pip`](http://www.pip-installer.org/en/latest/index.html)
-installed, you can simplify the installation process by just running `sudo pip
-install -r requirements.txt` from within the patentprocessor directory.
-
-Please [file an issue](https://github.com/funginstitute/patentprocessor/issues) if you find another dependency.
-
-### Ubuntu
-
-```
-sudo apt-get update
-sudo apt-get install python-dev
-sudo apt-get install python-setuptools
-sudo easy_install -U distribute
-sudo apt-get install -y python-Levenshtein make libmysqlclient-dev python-mysqldb python-pip python-zmq python-numpy gfortran libopenblas-dev liblapack-dev g++ sqlite3 libsqlite3-dev python-sqlite redis-server
-sudo pip install -r requirements.txt
-```
-
+See XXX for details on how to setup an environment for running the patents processor.
