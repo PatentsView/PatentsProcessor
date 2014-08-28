@@ -35,4 +35,4 @@ There are several steps in the patentprocessor toolchain:
 The python-based preprocessor is tested on Windows 2012 R2 Standard; originally it was 
 developed and tested on Ubuntu 12.04 and MacOSX 10.6, but has since been ported.
 
-See XXX for details on how to setup an environment for running the patents processor.
+See the [setup instructions in the wiki](https://github.com/CSSIP-AIR/PatentsProcessor/wiki/Setup-Instructions) for details on how to setup an environment for running the patents processor.
