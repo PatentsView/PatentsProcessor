@@ -140,7 +140,7 @@ def run_clean(process_config):
     if not process_config['clean']:
         return
     doctype = process_config['doctype']
-    command = 'bash run_clean.sh'
+    command = 'run_clean.sh'
     os.system(command)
 
 def run_consolidate(process_config):
@@ -148,7 +148,7 @@ def run_consolidate(process_config):
         return
     doctype = process_config['doctype']
     # TODO: optionally include previous disambiguation
-    command = 'bash run_consolidation.sh'
+    command = 'run_consolidation.sh'
     os.system(command)
 
 if __name__=='__main__':
