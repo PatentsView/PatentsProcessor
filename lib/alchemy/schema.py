@@ -830,8 +830,8 @@ class USPC(GrantBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):
@@ -1545,8 +1545,8 @@ class App_USPC(ApplicationBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
-    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):

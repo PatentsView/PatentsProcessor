@@ -119,8 +119,8 @@ def main(year, doctype):
               raw_name = ri.name_last.split(' ')
               # name_last is the last space-delimited word. Middle name is everything before that
               name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
-              namedict['name_middle'] = name_middle
-              namedict['name_last'] = name_last
+              namedict['name_middle'] = name_middle.strip('"')
+              namedict['name_last'] = name_last.strip('"')
               rawloc = ri.rawlocation
               if rawloc:
                 if rawloc.location:
