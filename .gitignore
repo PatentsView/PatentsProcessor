@@ -45,3 +45,4 @@ dump.rdb # redis dump
 *_files
 *.ipynb_checkpoints
 *.tsv
+.idea/
