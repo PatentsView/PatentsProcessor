@@ -174,6 +174,7 @@ class Patent(PatentHandler):
           country
         """
         assignees = self.xml.assignee
+        
         if not assignees:
             return []
         res = []
@@ -184,8 +185,8 @@ class Patent(PatentHandler):
             asg['organization'] = assignee.contents_of('organization_name', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
             if assignee.contents_of('country_code'):
-                asg['nationality'] = assignee.contents_of('country_code')[0]
-                asg['residence'] = assignee.contents_of('country_code')[0]
+                asg['nationality'] = assignee.contents_of('country_code', as_string=True)
+                asg['residence'] = assignee.contents_of('country_code', as_string=True)
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state']:
@@ -237,7 +238,6 @@ class Patent(PatentHandler):
                 app['sequence'] = i
                 app['uuid'] = str(uuid.uuid1())
                 res.append([app, loc])
-        print res
         return res
 
     def _get_doc_info(self, root):

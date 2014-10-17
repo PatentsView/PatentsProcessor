@@ -216,5 +216,5 @@ if __name__ == '__main__':
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
     DOCUMENTTYPE = args.get_document_type()
-    print PATENTROOT
+
     main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR, DOCUMENTTYPE)

@@ -114,7 +114,12 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        try:
+            middlename = tag_root.contents_of('middle_name',as_string=True,upper=False)
+            firstname+=' '+middlename
+        except:
+            pass
         lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
         return {'name_first': firstname, 'name_last': lastname}
 
@@ -165,8 +170,9 @@ class Patent(PatentHandler):
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
-            asg['nationality'] = assignee.nationality.contents_of('country')[0]
-            asg['residence'] = assignee.nationality.contents_of('country')[0]
+            if assignee.nationality.contents_of('country'):
+                asg['nationality'] = assignee.nationality.contents_of('country', as_string=True)
+                asg['residence'] = assignee.nationality.contents_of('country', as_string=True)
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state', 'country']:
