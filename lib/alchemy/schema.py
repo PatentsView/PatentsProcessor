@@ -102,6 +102,7 @@ class Patent(GrantBase):
     title = deferred(Column(UnicodeText))
     kind = Column(Unicode(10))
     num_claims = Column(Integer)
+    filename = Column(Unicode(120))
 
     application = relationship("Application", uselist=False, backref="patent", cascade=cascade)
     classes = relationship("USPC", backref="patent", cascade=cascade)
@@ -517,7 +518,8 @@ class RawLawyer(GrantBase):
             "name_first": self.name_first,
             "name_last": self.name_last,
             "organization": self.organization,
-            "country": self.country}
+            "country": self.country,
+            "sequence": self.sequence}
 
     @hybrid_property
     def __clean__(self):
@@ -830,8 +832,8 @@ class USPC(GrantBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):
@@ -1545,8 +1547,8 @@ class App_USPC(ApplicationBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
-    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):

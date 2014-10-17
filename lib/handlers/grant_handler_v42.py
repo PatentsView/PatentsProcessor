@@ -48,7 +48,7 @@ claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 class Patent(PatentHandler):
 
-    def __init__(self, xml_string, is_string=False):
+    def __init__(self, xml_string, filename, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
 
@@ -82,6 +82,7 @@ class Patent(PatentHandler):
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
         self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
+        self.filename = re.search('ipg.*$',filename,re.DOTALL).group()
 
         self.pat = {
             "id": self.patent,
@@ -92,7 +93,8 @@ class Patent(PatentHandler):
             "abstract": self.abstract,
             "title": self.invention_title,
             "kind": self.kind,
-            "num_claims": self.clm_num
+            "num_claims": self.clm_num,
+            "filename": self.filename
         }
         self.app = {
             "type": self.code_app,
@@ -285,6 +287,7 @@ class Patent(PatentHandler):
         if not lawyers:
             return []
         res = []
+        lawseq = 0
         for i, lawyer in enumerate(lawyers):
             law = {}
             law.update(self._name_helper_dict(lawyer))
@@ -292,7 +295,9 @@ class Patent(PatentHandler):
             law['organization'] = lawyer.contents_of('orgname', as_string=True, upper=False)
             if any(law.values()):
                 law['uuid'] = str(uuid.uuid1())
+                law['sequence'] = lawseq
                 res.append(law)
+            lawseq+=1
         return res
 
     def _get_doc_info(self, root):
@@ -368,8 +373,16 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_national.contents_of('main_classification')
+        crossrefsub = main[0][3:].replace(" ","")
+        if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+            crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+        crossrefsub = re.sub('^0+','',crossrefsub)
+        if re.search('[A-Z]{3}',crossrefsub[:3]):
+                crossrefsub = crossrefsub.replace(".","")
+        
         data = {'class': main[0][:3].replace(' ', ''),
-                'subclass': main[0][3:].replace(' ', '')}
+                'subclass': crossrefsub}
+           
         if any(data.values()):
             classes.append([
                 {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -379,8 +392,15 @@ class Patent(PatentHandler):
         if self.xml.classification_national.further_classification:
             further = self.xml.classification_national.contents_of('further_classification')
             for classification in further:
+                crossrefsub = classification[3:].replace(" ","")
+                if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+                    crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+                crossrefsub = re.sub('^0+','',crossrefsub)
+                if re.search('[A-Z]{3}',crossrefsub[:3]):
+                    crossrefsub = crossrefsub.replace(".","")
+ 
                 data = {'class': classification[:3].replace(' ', ''),
-                        'subclass': classification[3:].replace(' ', '')}
+                        'subclass': crossrefsub}
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},

@@ -129,7 +129,7 @@ def parse_files(filelist, doctype='grant'):
     for filename in filelist:
         print filename
         for i, xmltuple in enumerate(extract_xml_strings(filename)):
-            patobj = parse_patent(xmltuple, doctype)
+            patobj = parse_patent(xmltuple, filename, doctype)
             if doctype == 'grant':
                 alchemy.add_grant(patobj)
                 commit = alchemy.commit
@@ -140,11 +140,12 @@ def parse_files(filelist, doctype='grant'):
                 commit()
                 logging.info("{0} - {1} - {2}".format(filename, (i+1), datetime.datetime.now()))
                 print " *", (i+1), datetime.datetime.now()
+            
         commit()
         print " *", "Complete", datetime.datetime.now()
 
 
-def parse_patent(xmltuple, doctype='grant'):
+def parse_patent(xmltuple, filename, doctype='grant'):
     """
     Parses an xml string given as [xmltuple] with the appropriate parser (given
     by the first part of the tuple). Returns list of objects
@@ -154,7 +155,7 @@ def parse_patent(xmltuple, doctype='grant'):
         return
     try:
         date, xml = xmltuple  # extract out the parts of the tuple
-        patent = _get_parser(date, doctype).Patent(xml, True)
+        patent = _get_parser(date, doctype).Patent(xml, filename, True)
     except Exception as inst:
         logging.error(inst)
         logging.error("  - Error parsing patent: %s" % (xml[:400]))
@@ -215,5 +216,5 @@ if __name__ == '__main__':
     VERBOSITY = args.get_verbosity()
     PATENTOUTPUTDIR = args.get_output_directory()
     DOCUMENTTYPE = args.get_document_type()
-
+    print PATENTROOT
     main(PATENTROOT, XMLREGEX, VERBOSITY, PATENTOUTPUTDIR, DOCUMENTTYPE)

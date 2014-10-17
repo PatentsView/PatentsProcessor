@@ -51,7 +51,6 @@ class Patent(PatentHandler):
     def __init__(self, xml_string, filename, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
-
         parser.setContentHandler(xh)
         parser.setFeature(xml_driver.handler.feature_external_ges, False)
         l = xml.sax.xmlreader.Locator()
@@ -62,24 +61,33 @@ class Patent(PatentHandler):
             parser.parse(xml_string)
 
         self.attributes = ['app','application','assignee_list','inventor_list',
-                            'us_classifications',
+                          'us_classifications',
                           'claims']
 
-        self.xml = xh.root.us_patent_application
+        self.xml = xh.root.patent_application_publication
         self.xml_string = xml_string
-        self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
-        self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
-        self.kind = self.xml.publication_reference.contents_of('kind')[0]
-        self.date_app = self.xml.publication_reference.contents_of('date')[0]
-        if self.xml.application_reference:
-            self.pat_type = self.xml.application_reference[0].get_attribute('appl-type', upper=False)
+        
+        if filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code')):
+            self.country = filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code'))[0]
         else:
-            self.pat_type = None
-        self.clm_num = len(self.xml.claims.claim)
-        self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
+            self.country = ''
+        self.application = xml_util.normalize_document_identifier(self.xml.document_id.contents_of('doc_number')[0])
+        self.kind = self.xml.document_id.contents_of('kind_code')[0]
+        self.pat_type = None
+        self.date_app = self.xml.document_id.contents_of('document_date')[0]
+        self.clm_num = len(self.xml.subdoc_claims.claim)
+        #self.abstract = self.xml.subdoc_abstract.contents_of('paragraph', '', as_string=True, upper=False)
+        try:
+            self.abstract = re.search('<subdoc-abstract>(.*?)</subdoc-abstract>',xml_string,re.DOTALL).group(1)
+            self.abstract = re.sub('<.*?>|</.*?>','',self.abstract)
+            self.abstract = re.sub('[\n\t\r\f]+','',self.abstract)
+            self.abstract = re.sub('\s+',' ',self.abstract)
+        except:
+            self.abstract = ''
         self.invention_title = self._invention_title()
-        self.filename = re.search('ipa.*$',filename,re.DOTALL).group()
-
+        self.filename = re.search('i?pa.*$',filename,re.DOTALL).group()
+        
+        
         self.app = {
             "id": self.application,
             "type": self.pat_type,
@@ -95,7 +103,7 @@ class Patent(PatentHandler):
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
         
     def _invention_title(self):
-        original = self.xml.contents_of('invention_title', upper=False)[0]
+        original = self.xml.contents_of('title_of_invention', upper=False)[0]
         if isinstance(original, list):
             original = ''.join(original)
         return original
@@ -105,8 +113,12 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
-        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        if not firstname:
+            firstname = tag_root.contents_of('name_1', as_string=True, upper=False)
+        lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
+        if not lastname:
+            lastname = tag_root.contents_of('name_2', as_string=True, upper=False)
         return xml_util.associate_prefix(firstname, lastname)
 
     def _name_helper_dict(self, tag_root):
@@ -114,8 +126,14 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
-        lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        try:
+            middlename = tag_root.contents_of('middle_name',as_string=True,upper=False)
+            firstname+=' '+middlename
+        except:
+            pass
+        lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
+        
         return {'name_first': firstname, 'name_last': lastname}
 
     def _fix_date(self, datestring):
@@ -155,7 +173,7 @@ class Patent(PatentHandler):
           state
           country
         """
-        assignees = self.xml.assignees.assignee
+        assignees = self.xml.assignee
         if not assignees:
             return []
         res = []
@@ -163,16 +181,21 @@ class Patent(PatentHandler):
             # add assignee data
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
-            asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
+            asg['organization'] = assignee.contents_of('organization_name', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
-            asg['nationality'] = assignee.contents_of('country', as_string=True)
-            asg['residence'] = assignee.contents_of('country', as_string=True)
+            if assignee.contents_of('country_code'):
+                asg['nationality'] = assignee.contents_of('country_code')[0]
+                asg['residence'] = assignee.contents_of('country_code')[0]
             # add location data for assignee
             loc = {}
-            for tag in ['city', 'state', 'country']:
+            for tag in ['city', 'state']:
                 loc[tag] = assignee.contents_of(tag, as_string=True, upper=False)
+            if 'nationality' in asg:
+                loc['country'] = asg['nationality']
             #this is created because of MySQL foreign key case sensitivities
-            loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
+                loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
+            else:
+                loc['id'] = u''
             if any(asg.values()) or any(loc.values()):
                 asg['sequence'] = i
                 asg['uuid'] = str(uuid.uuid1())
@@ -182,8 +205,8 @@ class Patent(PatentHandler):
     @property
     def inventor_list(self):
         """
-        Returns list of lists of inventor dictionary and location dictionary
-        inventor:
+        Returns list of lists of applicant dictionary and location dictionary
+        applicant:
           name_last
           name_first
           sequence
@@ -193,26 +216,28 @@ class Patent(PatentHandler):
           state
           country
         """
-        inventors = self.xml.inventors.inventor
-        if not inventors:
+        applicants = self.xml.first_named_inventor + self.xml.inventors.inventor
+        if not applicants:
             return []
         res = []
-        for i, inventor in enumerate(inventors):
-            # add inventor data
-            inv = {}
-            inv.update(self._name_helper_dict(inventor.addressbook))
-            inv['nationality'] = inventor.contents_of('country', as_string=True)
-            # add location data for inventor
+        for i, applicant in enumerate(applicants):
+            # add applicant data
+            app = {}
+            app.update(self._name_helper_dict(applicant.name))
+            app['nationality'] = applicant.contents_of('country_code', as_string=True)
+            # add location data for applicant
             loc = {}
-            for tag in ['city', 'state', 'country']:
-                loc[tag] = inventor.contents_of(tag, as_string=True, upper=False)
+            for tag in ['city', 'state']:
+                loc[tag] = applicant.residence.contents_of(tag, as_string=True, upper=False)
+            loc['country'] = app['nationality']
             #this is created because of MySQL foreign key case sensitivities
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
-            del inv['nationality']
-            if any(inv.values()) or any(loc.values()):
-                inv['sequence'] = i
-                inv['uuid'] = str(uuid.uuid1())
-                res.append([inv, loc])
+            del app['nationality']
+            if any(app.values()) or any(loc.values()):
+                app['sequence'] = i
+                app['uuid'] = str(uuid.uuid1())
+                res.append([app, loc])
+        print res
         return res
 
     def _get_doc_info(self, root):
@@ -221,9 +246,12 @@ class Patent(PatentHandler):
         [country, doc-number, kind, date] for the given root
         """
         res = {}
-        for tag in ['country', 'kind', 'date']:
-            data = root.contents_of(tag)
-            res[tag] = data[0] if data else ''
+        country = root.contents_of('country_code')[0] if root.contents_of('country_code') else ''
+        kind = root.contents_of('kind_code')[0] if root.contents_of('kind_code') else ''
+        date = root.contents_of('document_date')[0] if root.contents_of('document_date') else ''
+        res['country'] = country if country else ''
+        res['kind'] = kind if kind else ''
+        res['date'] = date if date else ''
         res['number'] = xml_util.normalize_document_identifier(
             root.contents_of('doc_number')[0])
         return res
@@ -238,34 +266,53 @@ class Patent(PatentHandler):
         """
         classes = []
         i = 0
-        main = self.xml.classification_national.contents_of('main_classification')
-        crossrefsub = main[0][3:].replace(" ","")
-        if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
-            crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
-        crossrefsub = re.sub('^0+','',crossrefsub)
-        if re.search('[A-Z]{3}',crossrefsub[:3]):
-                crossrefsub = crossrefsub.replace(".","")
-        
-        data = {'class': main[0][:3].replace(' ', ''),
-                'subclass': crossrefsub}
+        main = self.xml.classification_us.classification_us_primary.uspc
+        crossrefsub = main.contents_of('subclass', as_string=True)
+        if crossrefsub[3:] != '000':
+            try:
+                temp = int(crossrefsub[3:])
+                if re.search('[A-Z]{3}',crossrefsub[0:3]) is None:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                else:
+                    subclass =re.sub('^0+','',crossrefsub[:3])+re.sub('^0+','',crossrefsub[3:])
+            except:
+                if len(re.sub('0+','',crossrefsub[3:])) > 1:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                else:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+re.sub('0+','',crossrefsub[3:])    
+        else:
+            subclass = re.sub('^0+','',crossrefsub[:3])
+                
+        data = {'class': re.sub('^0+','',main.contents_of('class', as_string=True)),
+              'subclass': subclass}
         if any(data.values()):
             classes.append([
                 {'uuid': str(uuid.uuid1()), 'sequence': i},
                 {'id': data['class'].upper()},
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
-        if self.xml.classification_national.further_classification:
-            further = self.xml.classification_national.contents_of('further_classification')
+        if self.xml.classification_us.classification_us_secondary:
+            further = self.xml.classification_us.classification_us_secondary
             for classification in further:
-                crossrefsub = classification[3:].replace(" ","")
-                if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
-                    crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
-                crossrefsub = re.sub('^0+','',crossrefsub)
-                if re.search('[A-Z]{3}',crossrefsub[:3]):
-                    crossrefsub = crossrefsub.replace(".","")
- 
-                data = {'class': classification[:3].replace(' ', ''),
-                        'subclass': crossrefsub}
+                crossrefsub = classification.contents_of('subclass', as_string=True)
+                if crossrefsub[3:] != '000':
+                    try:
+                        temp = int(crossrefsub[3:])
+                        if re.search('[A-Z]{3}',crossrefsub[0:3]) is None:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                        else:
+                            subclass =re.sub('^0+','',crossrefsub[:3])+re.sub('^0+','',crossrefsub[3:])
+                    except:
+                        if len(re.sub('0+','',crossrefsub[3:])) > 1:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                        else:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+re.sub('0+','',crossrefsub[3:])    
+                else:
+                    subclass = re.sub('^0+','',crossrefsub[:3])
+                
+        
+                data = {'class': classification.contents_of('class', as_string=True),
+                        'subclass': subclass}
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -284,17 +331,16 @@ class Patent(PatentHandler):
                        of the claim this one is dependent on
           sequence
         """
-
-        claimsdata = re.search('<claims.*?>(.*?)</claims>',self.xml_string,re.DOTALL).group(1)
-        
+        claimsdata = re.search('<subdoc-claims>(.*?)</subdoc-claims>',self.xml_string,re.DOTALL).group(1)
         claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
+        #claims = self.xml.claim
         res = []
         
         for i,claim in enumerate(claims):
             claim = claim.group(1)
             data = {}
             try:
-                dependent = re.search('<claim-ref idref="CLM-(\d+)">',claim).group(1)
+                dependent = re.search('<dependent-claim-reference depends_on="CLM-(\d+)">',claim).group(1)
                 data['dependent'] = int(dependent)
             except:
                 pass
@@ -305,22 +351,28 @@ class Patent(PatentHandler):
             data['sequence'] = i+1 # claims are 1-indexed
             data['uuid'] = str(uuid.uuid1())
             res.append(data)
-        print res
+        
+        
         """
-        claims = self.xml.claim
-        res = []
         for i, claim in enumerate(claims):
+            print claim
             data = {}
             data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
             # remove leading claim num from text
             data['text'] = claim_num_regex.sub('', data['text'])
+            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+            data['text'] = re.sub('\s+',' ',data['text'])
+            data['text'] = re.sub('^\.\s+','',data['text'])
             data['sequence'] = i+1 # claims are 1-indexed
-            if claim.claim_ref:
+            if claim.dependent_claim_reference and claim.dependent_claim_reference.claim_text:
                 # claim_refs are 'claim N', so we extract the N
-                claim_str = claim.contents_of('claim_ref',\
+                data['dependent'] = claim.dependent_claim_reference.contents_of('claim_text',\
                                         as_string=True).split(' ')[-1]
-                data['dependent'] = int(''.join(c for c in claim_str if c.isdigit()))
-            data['uuid'] = str(uuid.uuid1())
-            res.append(data)
+            elif claim.dependent_claim_reference:
+                data['dependent'] = claim.contents_of('dependent_claim_reference',\
+                                        as_string=True).split(' ')[-1]
+            if 'dependent' in data:
+                data['dependent'] = int(''.join(c for c in data['dependent'] if c.isdigit()))
+            
         """
         return res
