@@ -80,12 +80,12 @@ patentlawyer = Table(
 
 locationassignee = Table(
     'location_assignee', GrantBase.metadata,
-    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('location_id', Unicode(128), ForeignKey('location.id')),
     Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
 locationinventor = Table(
     'location_inventor', GrantBase.metadata,
-    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('location_id', Unicode(128), ForeignKey('location.id')),
     Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
 # PATENT ---------------------------
@@ -196,8 +196,8 @@ class Application(GrantBase):
 
 class RawLocation(GrantBase):
     __tablename__ = "rawlocation"
-    id = Column(Unicode(256), primary_key=True)
-    location_id = Column(Unicode(256), ForeignKey("location.id"))
+    id = Column(Unicode(128), primary_key=True)
+    location_id = Column(Unicode(128), ForeignKey("location.id"))
     city = Column(Unicode(128))
     state = Column(Unicode(20), index=True)
     country = Column(Unicode(10), index=True)
@@ -264,7 +264,7 @@ class RawLocation(GrantBase):
 
 class Location(GrantBase):
     __tablename__ = "location"
-    id = Column(Unicode(256), primary_key=True)
+    id = Column(Unicode(128), primary_key=True)
     city = Column(Unicode(128))
     state = Column(Unicode(20), index=True)
     country = Column(Unicode(10), index=True)
@@ -376,11 +376,11 @@ class RawAssignee(GrantBase):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     assignee_id = Column(Unicode(36), ForeignKey("assignee.id"))
-    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
+    rawlocation_id = Column(Unicode(128), ForeignKey("rawlocation.id"))
     type = Column(Unicode(10))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
-    organization = Column(Unicode(256))
+    organization = Column(Unicode(128))
     residence = Column(Unicode(10))
     nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
@@ -440,7 +440,7 @@ class RawInventor(GrantBase):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     inventor_id = Column(Unicode(36), ForeignKey("inventor.id"))
-    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
+    rawlocation_id = Column(Unicode(128), ForeignKey("rawlocation.id"))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     sequence = Column(Integer, index=True)
@@ -993,12 +993,12 @@ applicationinventor = Table(
 
 app_locationassignee = Table(
     'location_assignee', ApplicationBase.metadata,
-    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('location_id', Unicode(128), ForeignKey('location.id')),
     Column('assignee_id', Unicode(36), ForeignKey('assignee.id')))
 
 app_locationinventor = Table(
     'location_inventor', ApplicationBase.metadata,
-    Column('location_id', Unicode(256), ForeignKey('location.id')),
+    Column('location_id', Unicode(128), ForeignKey('location.id')),
     Column('inventor_id', Unicode(36), ForeignKey('inventor.id')))
 
 # PATENT ---------------------------
@@ -1060,8 +1060,8 @@ class App_Application(ApplicationBase):
 
 class App_RawLocation(ApplicationBase):
     __tablename__ = "rawlocation"
-    id = Column(Unicode(256), primary_key=True)
-    location_id = Column(Unicode(256), ForeignKey("location.id"))
+    id = Column(Unicode(128), primary_key=True)
+    location_id = Column(Unicode(128), ForeignKey("location.id"))
     city = Column(Unicode(128))
     state = Column(Unicode(20), index=True)
     country = Column(Unicode(10), index=True)
@@ -1128,7 +1128,7 @@ class App_RawLocation(ApplicationBase):
 
 class App_Location(ApplicationBase):
     __tablename__ = "location"
-    id = Column(Unicode(256), primary_key=True)
+    id = Column(Unicode(128), primary_key=True)
     city = Column(Unicode(128))
     state = Column(Unicode(20), index=True)
     country = Column(Unicode(10), index=True)
@@ -1240,7 +1240,7 @@ class App_RawAssignee(ApplicationBase):
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
     assignee_id = Column(Unicode(36), ForeignKey("assignee.id"))
-    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
+    rawlocation_id = Column(Unicode(128), ForeignKey("rawlocation.id"))
     type = Column(Unicode(10))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
@@ -1304,7 +1304,7 @@ class App_RawInventor(ApplicationBase):
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
     inventor_id = Column(Unicode(36), ForeignKey("inventor.id"))
-    rawlocation_id = Column(Unicode(256), ForeignKey("rawlocation.id"))
+    rawlocation_id = Column(Unicode(128), ForeignKey("rawlocation.id"))
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     sequence = Column(Integer, index=True)
