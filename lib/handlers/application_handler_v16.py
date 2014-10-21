@@ -48,10 +48,9 @@ claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 class Patent(PatentHandler):
 
-    def __init__(self, xml_string, is_string=False):
+    def __init__(self, xml_string, filename, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
-
         parser.setContentHandler(xh)
         parser.setFeature(xml_driver.handler.feature_external_ges, False)
         l = xml.sax.xmlreader.Locator()
@@ -66,7 +65,8 @@ class Patent(PatentHandler):
                           'claims']
 
         self.xml = xh.root.patent_application_publication
-
+        self.xml_string = xml_string
+        
         if filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code')):
             self.country = filter(lambda x: not isinstance(x, list), self.xml.contents_of('country_code'))[0]
         else:
@@ -76,9 +76,18 @@ class Patent(PatentHandler):
         self.pat_type = None
         self.date_app = self.xml.document_id.contents_of('document_date')[0]
         self.clm_num = len(self.xml.subdoc_claims.claim)
-        self.abstract = self.xml.subdoc_abstract.contents_of('paragraph', '', as_string=True, upper=False)
+        #self.abstract = self.xml.subdoc_abstract.contents_of('paragraph', '', as_string=True, upper=False)
+        try:
+            self.abstract = re.search('<subdoc-abstract>(.*?)</subdoc-abstract>',xml_string,re.DOTALL).group(1)
+            self.abstract = re.sub('<.*?>|</.*?>','',self.abstract)
+            self.abstract = re.sub('[\n\t\r\f]+','',self.abstract)
+            self.abstract = re.sub('\s+',' ',self.abstract)
+        except:
+            self.abstract = ''
         self.invention_title = self._invention_title()
-
+        self.filename = re.search('i?pa.*$',filename,re.DOTALL).group()
+        
+        
         self.app = {
             "id": self.application,
             "type": self.pat_type,
@@ -88,7 +97,8 @@ class Patent(PatentHandler):
             "abstract": self.abstract,
             "title": self.invention_title,
             "kind": self.kind,
-            "num_claims": self.clm_num
+            "num_claims": self.clm_num,
+            "filename": self.filename
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
@@ -117,7 +127,13 @@ class Patent(PatentHandler):
         with lastname
         """
         firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        try:
+            middlename = tag_root.contents_of('middle_name',as_string=True,upper=False)
+            firstname+=' '+middlename
+        except:
+            pass
         lastname = tag_root.contents_of('family_name', as_string=True, upper=False)
+        
         return {'name_first': firstname, 'name_last': lastname}
 
     def _fix_date(self, datestring):
@@ -158,6 +174,7 @@ class Patent(PatentHandler):
           country
         """
         assignees = self.xml.assignee
+        
         if not assignees:
             return []
         res = []
@@ -168,8 +185,8 @@ class Patent(PatentHandler):
             asg['organization'] = assignee.contents_of('organization_name', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
             if assignee.contents_of('country_code'):
-                asg['nationality'] = assignee.contents_of('country_code')[0]
-                asg['residence'] = assignee.contents_of('country_code')[0]
+                asg['nationality'] = assignee.contents_of('country_code', as_string=True)
+                asg['residence'] = assignee.contents_of('country_code', as_string=True)
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state']:
@@ -250,8 +267,24 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_us.classification_us_primary.uspc
-        data = {'class': main.contents_of('class', as_string=True),
-              'subclass': main.contents_of('subclass', as_string=True)}
+        crossrefsub = main.contents_of('subclass', as_string=True)
+        if crossrefsub[3:] != '000':
+            try:
+                temp = int(crossrefsub[3:])
+                if re.search('[A-Z]{3}',crossrefsub[0:3]) is None:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                else:
+                    subclass =re.sub('^0+','',crossrefsub[:3])+re.sub('^0+','',crossrefsub[3:])
+            except:
+                if len(re.sub('0+','',crossrefsub[3:])) > 1:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                else:
+                    subclass = re.sub('^0+','',crossrefsub[:3])+re.sub('0+','',crossrefsub[3:])    
+        else:
+            subclass = re.sub('^0+','',crossrefsub[:3])
+                
+        data = {'class': re.sub('^0+','',main.contents_of('class', as_string=True)),
+              'subclass': subclass}
         if any(data.values()):
             classes.append([
                 {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -261,8 +294,25 @@ class Patent(PatentHandler):
         if self.xml.classification_us.classification_us_secondary:
             further = self.xml.classification_us.classification_us_secondary
             for classification in further:
+                crossrefsub = classification.contents_of('subclass', as_string=True)
+                if crossrefsub[3:] != '000':
+                    try:
+                        temp = int(crossrefsub[3:])
+                        if re.search('[A-Z]{3}',crossrefsub[0:3]) is None:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                        else:
+                            subclass =re.sub('^0+','',crossrefsub[:3])+re.sub('^0+','',crossrefsub[3:])
+                    except:
+                        if len(re.sub('0+','',crossrefsub[3:])) > 1:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                        else:
+                            subclass = re.sub('^0+','',crossrefsub[:3])+re.sub('0+','',crossrefsub[3:])    
+                else:
+                    subclass = re.sub('^0+','',crossrefsub[:3])
+                
+        
                 data = {'class': classification.contents_of('class', as_string=True),
-                        'subclass': classification.contents_of('class', as_string=True)}
+                        'subclass': subclass}
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -281,13 +331,38 @@ class Patent(PatentHandler):
                        of the claim this one is dependent on
           sequence
         """
-        claims = self.xml.claim
+        claimsdata = re.search('<subdoc-claims>(.*?)</subdoc-claims>',self.xml_string,re.DOTALL).group(1)
+        claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
+        #claims = self.xml.claim
         res = []
+        
+        for i,claim in enumerate(claims):
+            claim = claim.group(1)
+            data = {}
+            try:
+                dependent = re.search('<dependent-claim-reference depends_on="CLM-(\d+)">',claim).group(1)
+                data['dependent'] = int(dependent)
+            except:
+                pass
+            data['text'] = re.sub('<.*?>|</.*?>','',claim)
+            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+            data['text'] = re.sub('^\d+\.\s+','',data['text'])
+            data['text'] = re.sub('\s+',' ',data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
+        
+        
+        """
         for i, claim in enumerate(claims):
+            print claim
             data = {}
             data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
             # remove leading claim num from text
             data['text'] = claim_num_regex.sub('', data['text'])
+            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+            data['text'] = re.sub('\s+',' ',data['text'])
+            data['text'] = re.sub('^\.\s+','',data['text'])
             data['sequence'] = i+1 # claims are 1-indexed
             if claim.dependent_claim_reference and claim.dependent_claim_reference.claim_text:
                 # claim_refs are 'claim N', so we extract the N
@@ -298,6 +373,6 @@ class Patent(PatentHandler):
                                         as_string=True).split(' ')[-1]
             if 'dependent' in data:
                 data['dependent'] = int(''.join(c for c in data['dependent'] if c.isdigit()))
-            data['uuid'] = str(uuid.uuid1())
-            res.append(data)
+            
+        """
         return res

@@ -48,7 +48,7 @@ claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 class Patent(PatentHandler):
 
-    def __init__(self, xml_string, is_string=False):
+    def __init__(self, xml_string, filename, is_string=False):
         xh = xml_driver.XMLHandler()
         parser = xml_driver.make_parser()
 
@@ -66,7 +66,7 @@ class Patent(PatentHandler):
                      'claims']
 
         self.xml = xh.root.us_patent_application
-
+        self.xml_string = xml_string
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
@@ -78,7 +78,8 @@ class Patent(PatentHandler):
         self.clm_num = len(self.xml.claims.claim)
         self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
         self.invention_title = self._invention_title()
-
+        self.filename = re.search('ipa.*$',filename,re.DOTALL).group()
+        
         self.app = {
             "id": self.application,
             "type": self.pat_type,
@@ -88,7 +89,8 @@ class Patent(PatentHandler):
             "abstract": self.abstract,
             "title": self.invention_title,
             "kind": self.kind,
-            "num_claims": self.clm_num
+            "num_claims": self.clm_num,
+            "filename": self.filename
         }
         self.app["id"] = str(self.app["date"])[:4] + "/" + self.app["number"]
 
@@ -113,6 +115,11 @@ class Patent(PatentHandler):
         with lastname
         """
         firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
+        try:
+            middlename = tag_root.contents_of('middle_name',as_string=True,upper=False)
+            firstname+=' '+middlename
+        except:
+            pass
         lastname = tag_root.contents_of('last_name', as_string=True, upper=False)
         return {'name_first': firstname, 'name_last': lastname}
 
@@ -163,8 +170,9 @@ class Patent(PatentHandler):
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
             asg['role'] = assignee.contents_of('role', as_string=True)
-            asg['nationality'] = assignee.contents_of('country', as_string=True)
-            asg['residence'] = assignee.contents_of('country', as_string=True)
+            if assignee.nationality.contents_of('country'):
+                asg['nationality'] = assignee.nationality.contents_of('country', as_string=True)
+                asg['residence'] = assignee.nationality.contents_of('country', as_string=True)
             # add location data for assignee
             loc = {}
             for tag in ['city', 'state', 'country']:
@@ -237,8 +245,15 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_national.contents_of('main_classification')
+        crossrefsub = main[0][3:].replace(" ","")
+        if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+            crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+        crossrefsub = re.sub('^0+','',crossrefsub)
+        if re.search('[A-Z]{3}',crossrefsub[:3]):
+                crossrefsub = crossrefsub.replace(".","")
+        
         data = {'class': main[0][:3].replace(' ', ''),
-                'subclass': main[0][3:].replace(' ', '')}
+                'subclass': crossrefsub}
         if any(data.values()):
             classes.append([
                 {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -248,8 +263,15 @@ class Patent(PatentHandler):
         if self.xml.classification_national.further_classification:
             further = self.xml.classification_national.contents_of('further_classification')
             for classification in further:
+                crossrefsub = classification[3:].replace(" ","")
+                if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+                    crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+                crossrefsub = re.sub('^0+','',crossrefsub)
+                if re.search('[A-Z]{3}',crossrefsub[:3]):
+                    crossrefsub = crossrefsub.replace(".","")
+ 
                 data = {'class': classification[:3].replace(' ', ''),
-                        'subclass': classification[3:].replace(' ', '')}
+                        'subclass': crossrefsub}
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -268,6 +290,26 @@ class Patent(PatentHandler):
                        of the claim this one is dependent on
           sequence
         """
+        claimsdata = re.search('<claims.*?>(.*?)</claims>',self.xml_string,re.DOTALL).group(1)
+        claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
+        res = []
+        
+        for i,claim in enumerate(claims):
+            claim = claim.group(1)
+            data = {}
+            try:
+                dependent = re.search('<claim-ref idref="CLM-(\d+)">',claim).group(1)
+                data['dependent'] = int(dependent)
+            except:
+                pass
+            data['text'] = re.sub('<.*?>|</.*?>','',claim)
+            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+            data['text'] = re.sub('^\d+\.\s+','',data['text'])
+            data['text'] = re.sub('\s+',' ',data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
+        """
         claims = self.xml.claim
         res = []
         for i, claim in enumerate(claims):
@@ -275,6 +317,7 @@ class Patent(PatentHandler):
             data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
             # remove leading claim num from text
             data['text'] = claim_num_regex.sub('', data['text'])
+            print data['text']
             data['sequence'] = i+1 # claims are 1-indexed
             if claim.claim_ref:
                 # claim_refs are 'claim N', so we extract the N
@@ -283,4 +326,5 @@ class Patent(PatentHandler):
                 data['dependent'] = int(''.join(c for c in claim_str if c.isdigit()))
             data['uuid'] = str(uuid.uuid1())
             res.append(data)
+        """
         return res
