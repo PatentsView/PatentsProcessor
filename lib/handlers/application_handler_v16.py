@@ -331,26 +331,27 @@ class Patent(PatentHandler):
                        of the claim this one is dependent on
           sequence
         """
-        claimsdata = re.search('<subdoc-claims>(.*?)</subdoc-claims>',self.xml_string,re.DOTALL).group(1)
-        claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
-        #claims = self.xml.claim
         res = []
-        
-        for i,claim in enumerate(claims):
-            claim = claim.group(1)
-            data = {}
-            try:
-                dependent = re.search('<dependent-claim-reference depends_on="CLM-(\d+)">',claim).group(1)
-                data['dependent'] = int(dependent)
-            except:
-                pass
-            data['text'] = re.sub('<.*?>|</.*?>','',claim)
-            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
-            data['text'] = re.sub('^\d+\.\s+','',data['text'])
-            data['text'] = re.sub('\s+',' ',data['text'])
-            data['sequence'] = i+1 # claims are 1-indexed
-            data['uuid'] = str(uuid.uuid1())
-            res.append(data)
+        if re.search('<subdoc-claims>(.*?)</subdoc-claims>',self.xml_string,re.DOTALL) != None:
+            claimsdata = re.search('<subdoc-claims>(.*?)</subdoc-claims>',self.xml_string,re.DOTALL).group(1)
+            claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
+            #claims = self.xml.claim
+            
+            for i,claim in enumerate(claims):
+                claim = claim.group(1)
+                data = {}
+                try:
+                    dependent = re.search('<dependent-claim-reference depends_on="CLM-(\d+)">',claim).group(1)
+                    data['dependent'] = int(dependent)
+                except:
+                    pass
+                data['text'] = re.sub('<.*?>|</.*?>','',claim)
+                data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+                data['text'] = re.sub('^\d+\.\s+','',data['text'])
+                data['text'] = re.sub('\s+',' ',data['text'])
+                data['sequence'] = i+1 # claims are 1-indexed
+                data['uuid'] = str(uuid.uuid1())
+                res.append(data)
         
         
         """
