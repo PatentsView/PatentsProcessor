@@ -78,10 +78,15 @@ def main(year, doctype):
     schema = alchemy.schema.Patent
     if doctype == 'application':
         schema = alchemy.schema.App_Application
-    if year:
-        patents = (p for p in session.query(schema).filter(extract('year', schema.date) == year).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        if year:
+            patents = (p for p in session.query(schema).filter(extract('year', schema.date) == year).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        else:
+            patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
     else:
-        patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('classes')).yield_per(1))
+        if year:
+            patents = (p for p in session.query(schema).filter(extract('year', schema.date) == year).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('current_classes')).yield_per(1))
+        else:
+            patents = (p for p in session.query(schema).options(subqueryload('rawinventors'), subqueryload('rawassignees'), subqueryload('current_classes')).yield_per(1))
     i = 0
     for patent in patents:
         i += 1
@@ -94,8 +99,12 @@ def main(year, doctype):
             primloc = patent.rawinventors[0].rawlocation.location
           else:
             primloc = primrawloc
-          mainclass = patent.classes[0].mainclass_id if patent.classes else ''
-          subclass = patent.classes[0].subclass_id if patent.classes else ''
+          if doctype == 'application':
+            mainclass = patent.classes[0].mainclass_id if patent.classes else ''
+            subclass = patent.classes[0].subclass_id if patent.classes else ''
+          else:
+            mainclass = patent.current_classes[0].mainclass_id if patent.current_classes else ''
+            subclass = patent.current_classes[0].subclass_id if patent.current_classes else ''
           row = {'number': patent.id,
                  'mainclass': mainclass,
                  'subclass': subclass,

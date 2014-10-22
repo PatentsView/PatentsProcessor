@@ -106,6 +106,7 @@ class Patent(GrantBase):
 
     application = relationship("Application", uselist=False, backref="patent", cascade=cascade)
     classes = relationship("USPC", backref="patent", cascade=cascade)
+    current_classes = relationship("USPC_current", backref="patent", cascade=cascade)
     ipcrs = relationship("IPCR", backref="patent", cascade=cascade)
 
     rawassignees = relationship("RawAssignee", backref="patent", cascade=cascade)
@@ -150,6 +151,7 @@ class Patent(GrantBase):
     def stats(self):
         return {
             "classes": len(self.classes),
+            "current_classes": len(self.current_classes),
             "ipcrs": len(self.ipcrs),
             "rawassignees": len(self.rawassignees),
             "rawinventors": len(self.rawinventors),
@@ -832,12 +834,24 @@ class USPC(GrantBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
-    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):
         return "<USPC('{1}')>".format(self.subclass_id)
+
+
+class USPC_current(GrantBase):
+    __tablename__ = "uspc_current"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    mainclass_id = Column(Unicode(20), ForeignKey("mainclass_current.id"))
+    subclass_id = Column(Unicode(20), ForeignKey("subclass_current.id"))
+    sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        return "<USPC_current('{1}')>".format(self.subclass_id)
 
 
 class IPCR(GrantBase):
@@ -869,6 +883,17 @@ class MainClass(GrantBase):
         return "<MainClass('{0}')>".format(self.id)
 
 
+class MainClass_current(GrantBase):
+    __tablename__ = "mainclass_current"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    text = Column(Unicode(256))
+    uspc_current = relationship("USPC_current", backref="mainclass_current")
+
+    def __repr__(self):
+        return "<MainClass('{0}')>".format(self.id)
+
+
 class SubClass(GrantBase):
     __tablename__ = "subclass"
     id = Column(Unicode(20), primary_key=True)
@@ -878,6 +903,17 @@ class SubClass(GrantBase):
 
     def __repr__(self):
         return "<SubClass('{0}')>".format(self.id)
+
+
+class SubClass_current(GrantBase):
+    __tablename__ = "subclass_current"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    text = Column(Unicode(256))
+    uspc_current = relationship("USPC_current", backref="subclass_current")
+
+    def __repr__(self):
+        return "<SubClass_current('{0}')>".format(self.id)
 
 
 # REFERENCES -----------------------
@@ -1547,8 +1583,8 @@ class App_USPC(ApplicationBase):
     __tablename__ = "uspc"
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
-    mainclass_id = Column(Unicode(10), ForeignKey("mainclass.id"))
-    subclass_id = Column(Unicode(10), ForeignKey("subclass.id"))
+    mainclass_id = Column(Unicode(20), ForeignKey("mainclass.id"))
+    subclass_id = Column(Unicode(20), ForeignKey("subclass.id"))
     sequence = Column(Integer, index=True)
 
     def __repr__(self):

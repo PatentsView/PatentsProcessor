@@ -242,6 +242,7 @@ def add_all_fields(obj, pat):
     add_ipcr(obj, pat)
     add_citations(obj, pat)
     add_claims(obj, pat)
+    add_current_classes(obj, pat)
 
 
 def add_asg(obj, pat):
@@ -292,6 +293,19 @@ def add_classes(obj, pat):
         uspc.mainclass = mc
         uspc.subclass = sc
         pat.classes.append(uspc)
+
+
+def add_current_classes(obj, pat):
+    for uspc_current, mc, sc in obj.us_classifications:
+        uspc_current = fixid(uspc_current)
+        uspc_current = schema.USPC_current(**uspc_current)
+        mc = schema.MainClass_current(**mc)
+        sc = schema.SubClass_current(**sc)
+        grantsession.merge(mc)
+        grantsession.merge(sc)
+        uspc_current.mainclass_current = mc
+        uspc_current.subclass_current = sc
+        pat.current_classes.append(uspc_current)
 
 
 def add_ipcr(obj, pat):
