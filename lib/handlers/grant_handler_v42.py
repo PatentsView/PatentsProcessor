@@ -66,7 +66,7 @@ class Patent(PatentHandler):
                      'citation_list','claims']
 
         self.xml = xh.root.us_patent_grant
-
+        self.xml_string = xml_string
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.patent = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
@@ -458,8 +458,30 @@ class Patent(PatentHandler):
                        of the claim this one is dependent on
           sequence
         """
+        
+        claimsdata = re.search('<claims.*?>(.*?)</claims>',self.xml_string,re.DOTALL).group(1)
+        claims = re.finditer('<claim.*?>(.*?)</claim>',claimsdata,re.DOTALL)
+        res = []
+        
+        for i,claim in enumerate(claims):
+            claim = claim.group(1)
+            data = {}
+            try:
+                dependent = re.search('<claim-ref idref="CLM-(\d+)">',claim).group(1)
+                data['dependent'] = int(dependent)
+            except:
+                pass
+            data['text'] = re.sub('<.*?>|</.*?>','',claim)
+            data['text'] = re.sub('[\n\t\r\f]+','',data['text'])
+            data['text'] = re.sub('^\d+\.\s+','',data['text'])
+            data['text'] = re.sub('\s+',' ',data['text'])
+            data['sequence'] = i+1 # claims are 1-indexed
+            data['uuid'] = str(uuid.uuid1())
+            res.append(data)
+        """
         claims = self.xml.claim
         res = []
+        
         for i, claim in enumerate(claims):
             data = {}
             data['text'] = claim.contents_of('claim_text', as_string=True, upper=False)
@@ -472,4 +494,5 @@ class Patent(PatentHandler):
                                         as_string=True).split(' ')[-1])
             data['uuid'] = str(uuid.uuid1())
             res.append(data)
+        """
         return res
