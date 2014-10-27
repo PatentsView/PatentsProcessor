@@ -148,11 +148,11 @@ def integrate(disambig_input_file, disambig_output_file):
     rawinventors = defaultdict(list)
     inventor_inserts = []
     rawinventor_updates = []
-    patentinventor_inserts = []
+    applicationinventor_inserts = []
     for row in apps.iterrows():
         uuid = row[1]['current_inventorid']
         rawinventors[uuid].append(row[1])
-        patentinventor_inserts.append({'inventor_id': uuid, 'patent_id': row[1]['patent_id']})
+        applicationinventor_inserts.append({'inventor_id': uuid, 'application_id': row[1]['patent_id']})
     print 'finished associating ids'
     i = 0
     for inventor_id in rawinventors.iterkeys():
@@ -190,7 +190,7 @@ def integrate(disambig_input_file, disambig_output_file):
 
     from lib.tasks import bulk_commit_inserts, bulk_commit_updates
     bulk_commit_inserts(inventor_inserts, App_Inventor.__table__, is_mysql(), 20000,'application')
-    bulk_commit_inserts(patentinventor_inserts, applicationinventor, is_mysql(), 20000,'application')
+    bulk_commit_inserts(applicationinventor_inserts, applicationinventor, is_mysql(), 20000,'application')
     bulk_commit_updates('inventor_id', rawinventor_updates, App_RawInventor.__table__, is_mysql(), 20000,'application')
 
 

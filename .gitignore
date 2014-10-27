@@ -46,3 +46,4 @@ dump.rdb # redis dump
 *.ipynb_checkpoints
 *.tsv
 .idea/
+mid.txt
