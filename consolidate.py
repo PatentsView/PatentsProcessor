@@ -62,6 +62,7 @@ from sqlalchemy import extract
 from datetime import datetime
 import pandas as pd
 import sys
+import name_parser
 
 #TODO: for ignore rows, use the uuid instead (leave blank if not ignore) and use that to link the ids together for integration
 
@@ -124,12 +125,12 @@ def main(year, doctype):
           for ri in patent.rawinventors:
               if not len(ri.name_first.strip()):
                   continue
-              namedict = {'name_first': ri.name_first, 'uuid': ri.uuid}
-              raw_name = ri.name_last.split(' ')
-              # name_last is the last space-delimited word. Middle name is everything before that
-              name_middle, name_last = ' '.join(raw_name[:-1]), raw_name[-1]
-              namedict['name_middle'] = name_middle.strip('"')
-              namedict['name_last'] = name_last.strip('"')
+              namedict = {'uuid': ri.uuid}
+              parsedNames = name_parser.parse_name(name_parser.NameFormat.CITESEERX, ri.name_first + ' ' + ri.name_last)
+              namedict['name_first'] = ' '.join(filter(None, (parsedNames.Prefix, parsedNames.GivenName)))
+              namedict['name_middle'] = parsedNames.OtherName if parsedNames.OtherName is not None else ''
+              namedict['name_last'] = ' '.join(filter(None, (parsedNames.FamilyName, parsedNames.Suffix)))
+
               rawloc = ri.rawlocation
               if rawloc:
                 if rawloc.location:

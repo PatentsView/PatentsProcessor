@@ -49,6 +49,7 @@ from collections import defaultdict, Counter
 from lib.tasks import bulk_commit_inserts, bulk_commit_updates
 from unidecode import unidecode
 from datetime import datetime
+import name_parser
 
 def integrate(disambig_input_file, disambig_output_file):
     """
@@ -118,8 +119,9 @@ def integrate(disambig_input_file, disambig_output_file):
                 freq[k][v] += 1
         param['id'] = inventor_id
         name = freq['name'].most_common(1)[0][0]
-        name_first = unidecode(' '.join(name.split(' ')[:-1]))
-        name_last = unidecode(name.split(' ')[-1])
+        parsedNames = name_parser.parse_name(name_parser.NameFormat.CITESEERX, name)
+        name_first = ' '.join(filter(None, (parsedNames.Prefix, parsedNames.GivenName, parsedNames.OtherName)))
+        name_last = ' '.join(filter(None, (parsedNames.FamilyName, parsedNames.Suffix)))
         param['name_first'] = name_first
         param['name_last'] = name_last
         param['nationality'] = ''
@@ -169,8 +171,9 @@ def integrate(disambig_input_file, disambig_output_file):
                 freq[k][v] += 1
         param['id'] = inventor_id
         name = freq['name'].most_common(1)[0][0]
-        name_first = unidecode(' '.join(name.split(' ')[:-1]))
-        name_last = unidecode(name.split(' ')[-1])
+        parsedNames = name_parser.parse_name(name_parser.NameFormat.CITESEERX, name)
+        name_first = ' '.join(filter(None, (parsedNames.Prefix, parsedNames.GivenName, parsedNames.OtherName)))
+        name_last = ' '.join(filter(None, (parsedNames.FamilyName, parsedNames.Suffix)))
         param['name_first'] = name_first
         param['name_last'] = name_last
         param['nationality'] = ''
