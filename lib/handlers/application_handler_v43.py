@@ -114,7 +114,7 @@ class Patent(PatentHandler):
         Returns dictionary of firstname, lastname with prefix associated
         with lastname
         """
-        firstname = tag_root.contents_of('given_name', as_string=True, upper=False)
+        firstname = tag_root.contents_of('first_name', as_string=True, upper=False)
         try:
             middlename = tag_root.contents_of('middle_name',as_string=True,upper=False)
             firstname+=' '+middlename
