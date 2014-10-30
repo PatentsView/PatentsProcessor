@@ -269,7 +269,7 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         """
         default = {"id": grouping_id, "city":first_matching_location.city,
                    "state":first_matching_location.region,
-                   "country":first_matching_location.country,
+                   "country": first_matching_location.country.upper(),
                    "latitude":first_matching_location.latitude,
                    "longitude":first_matching_location.longitude}
         #No need to run match() if no matching location was found.
