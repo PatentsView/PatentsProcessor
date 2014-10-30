@@ -276,7 +276,7 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
     if alchemy.is_mysql():
-        alchemy_session.execute('truncate location; truncate assignee_location; truncate inventor_location;')
+        alchemy_session.execute('truncate location; truncate location_assignee; truncate location_inventor;')
     else:
         alchemy_session.execute('delete from location;')
         alchemy_session.commit()

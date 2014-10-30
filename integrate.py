@@ -201,7 +201,7 @@ def integrate(disambig_input_file, disambig_output_file):
     session = session_generator()
     doctype = 'grant'
     session.execute('truncate location_assignee;')
-    res = session.execute('select location_id, assignee_id from patent \
+    res = session.execute('select distinct location_id, assignee_id from patent \
         left join rawassignee on rawassignee.patent_id = patent.id \
         left join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
         where assignee_id != "" and location_id != "";')
@@ -213,7 +213,7 @@ def integrate(disambig_input_file, disambig_output_file):
     bulk_commit_inserts(locationassignee_inserts, alchemy.schema.locationassignee, alchemy.is_mysql(), 20000, 'grant')
 
     session.execute('truncate location_inventor;')
-    res = session.execute('select location_id, inventor_id from patent \
+    res = session.execute('select distinct location_id, inventor_id from patent \
         left join rawinventor on rawinventor.patent_id = patent.id \
         left join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
         where inventor_id != "" and location_id != "";')
@@ -228,7 +228,7 @@ def integrate(disambig_input_file, disambig_output_file):
     session_generator = alchemy.session_generator(dbtype='application')
     session = session_generator()
     session.execute('truncate location_assignee;')
-    res = session.execute('select location_id, assignee_id from application \
+    res = session.execute('select distinct location_id, assignee_id from application \
         left join rawassignee on rawassignee.application_id = application.id \
         left join rawlocation on rawlocation.id = rawassignee.rawlocation_id \
         where assignee_id != "" and location_id != "";')
@@ -240,7 +240,7 @@ def integrate(disambig_input_file, disambig_output_file):
     bulk_commit_inserts(locationassignee_inserts, alchemy.schema.app_locationassignee, alchemy.is_mysql(), 20000, 'application')
 
     session.execute('truncate location_inventor;')
-    res = session.execute('select location_id, inventor_id from application \
+    res = session.execute('select distinct location_id, inventor_id from application \
         left join rawinventor on rawinventor.application_id = application.id \
         left join rawlocation on rawlocation.id = rawinventor.rawlocation_id \
         where inventor_id != "" and location_id != "";')
