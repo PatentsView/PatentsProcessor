@@ -94,7 +94,7 @@ locationinventor = Table(
 class Patent(GrantBase):
     __tablename__ = "patent"
     id = Column(Unicode(20), primary_key=True)
-    type = Column(Unicode(20))
+    type = Column(Unicode(100))
     number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
@@ -1050,6 +1050,7 @@ class App_Application(ApplicationBase):
     title = deferred(Column(UnicodeText))
     granted = Column(Boolean)
     num_claims = Column(Integer)
+    filename = Column(Unicode(120))
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),
