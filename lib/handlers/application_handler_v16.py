@@ -45,6 +45,8 @@ import xml_driver
 
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
+from HTMLParser import HTMLParser
+h = HTMLParser()
 
 class Patent(PatentHandler):
 
@@ -82,11 +84,11 @@ class Patent(PatentHandler):
             self.abstract = re.sub('<.*?>|</.*?>','',self.abstract)
             self.abstract = re.sub('[\n\t\r\f]+','',self.abstract)
             self.abstract = re.sub('\s+',' ',self.abstract)
+            self.abstract = h.unescape(self.abstract)
         except:
             self.abstract = ''
-        self.invention_title = self._invention_title()
+        self.invention_title = h.unescape(self._invention_title())
         self.filename = re.search('i?pa.*$',filename,re.DOTALL).group()
-        
         
         self.app = {
             "id": self.application,
@@ -183,7 +185,7 @@ class Patent(PatentHandler):
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('organization_name', as_string=True, upper=False)
-            asg['role'] = assignee.contents_of('role', as_string=True)
+            asg['type'] = assignee.contents_of('assignee_type', as_string=True)
             if assignee.contents_of('country_code'):
                 asg['nationality'] = assignee.contents_of('country_code', as_string=True)
                 asg['residence'] = assignee.contents_of('country_code', as_string=True)

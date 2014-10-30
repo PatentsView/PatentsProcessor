@@ -177,6 +177,7 @@ class Application(GrantBase):
     number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
+    
     usapplicationcitations = relationship(
         "USApplicationCitation",
         primaryjoin="Application.id == USApplicationCitation.application_id",
@@ -1050,6 +1051,7 @@ class App_Application(ApplicationBase):
     title = deferred(Column(UnicodeText))
     granted = Column(Boolean)
     num_claims = Column(Integer)
+    filename = Column(Unicode(120))
     __table_args__ = (
         Index("app_idx1", "type", "number"),
         Index("app_idx2", "date"),

@@ -45,6 +45,8 @@ import xml_driver
 
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
+from HTMLParser import HTMLParser
+h = HTMLParser()
 
 class Patent(PatentHandler):
 
@@ -67,6 +69,7 @@ class Patent(PatentHandler):
 
         self.xml = xh.root.us_patent_application
         self.xml_string = xml_string
+        
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
@@ -76,10 +79,10 @@ class Patent(PatentHandler):
         else:
             self.pat_type = None
         self.clm_num = len(self.xml.claims.claim)
-        self.abstract = self.xml.abstract.contents_of('p', '', as_string=True, upper=False)
-        self.invention_title = self._invention_title()
+        self.abstract = h.unescape(self.xml.abstract.contents_of('p', '', as_string=True, upper=False))
+        self.invention_title = h.unescape(self._invention_title())
         self.filename = re.search('ipa.*$',filename,re.DOTALL).group()
-
+        
         self.app = {
             "id": self.application,
             "type": self.pat_type,
@@ -148,6 +151,7 @@ class Patent(PatentHandler):
         """
         Returns list of dictionaries:
         assignee:
+          type
           name_last
           name_first
           residence
@@ -169,7 +173,7 @@ class Patent(PatentHandler):
             asg = {}
             asg.update(self._name_helper_dict(assignee))  # add firstname, lastname
             asg['organization'] = assignee.contents_of('orgname', as_string=True, upper=False)
-            asg['role'] = assignee.contents_of('role', as_string=True)
+            asg['type'] = assignee.contents_of('role', as_string=True)
             if assignee.contents_of('country'):
                 asg['nationality'] = assignee.contents_of('country', as_string=True)
                 asg['residence'] = assignee.contents_of('country', as_string=True)
