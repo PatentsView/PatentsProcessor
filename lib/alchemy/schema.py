@@ -177,6 +177,7 @@ class Application(GrantBase):
     number = Column(Unicode(64))
     country = Column(Unicode(20))
     date = Column(Date)
+    
     usapplicationcitations = relationship(
         "USApplicationCitation",
         primaryjoin="Application.id == USApplicationCitation.application_id",

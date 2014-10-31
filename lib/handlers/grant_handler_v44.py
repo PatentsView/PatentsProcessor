@@ -45,6 +45,8 @@ import xml_driver
 
 claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
+from HTMLParser import HTMLParser
+h = HTMLParser()
 
 class Patent(PatentHandler):
 
@@ -80,8 +82,8 @@ class Patent(PatentHandler):
         self.patent_app = self.xml.application_reference.contents_of('doc_number')[0]
         self.code_app = self.xml.contents_of('us_application_series_code')[0]
         self.clm_num = self.xml.contents_of('number_of_claims')[0]
-        self.abstract = xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False)
-        self.invention_title = self._invention_title()
+        self.abstract = h.unescape(xh.root.us_patent_grant.abstract.contents_of('p', '', as_string=True, upper=False))
+        self.invention_title = h.unescape(self._invention_title())
         self.filename = re.search('ipg.*$',filename,re.DOTALL).group()
 
         self.pat = {

@@ -45,6 +45,12 @@ from sqlalchemy import exc
 from sqlalchemy import event
 from sqlalchemy.pool import Pool
 
+from HTMLParser import HTMLParser
+h = HTMLParser()
+def unescape_html(x):
+    return h.unescape(x)
+
+
 def fixid(x):
     if 'id' in x:
         x['id'] = str(uuid.uuid1())
@@ -248,6 +254,7 @@ def add_all_fields(obj, pat):
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
         asg = fixid(asg)
+        asg = unescape_html(asg)
         loc = fixid(loc)
         asg = schema.RawAssignee(**asg)
         loc = schema.RawLocation(**loc)
@@ -344,6 +351,7 @@ def add_claims(obj, pat):
     claims = obj.claims
     for claim in claims:
         claim = fixid(claim)
+        claim = unescape_html(claim)
         clm = schema.Claim(**claim)
         pat.claims.append(clm)
 
@@ -404,6 +412,7 @@ def add_app_asg(obj, app):
     for asg, loc in obj.assignee_list:
         loc = fixid(loc)
         asg = fixid(asg)
+        asg = unescape_html(asg)
         asg = schema.App_RawAssignee(**asg)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
@@ -458,6 +467,7 @@ def add_app_claims(obj, app):
     claims = obj.claims
     for claim in claims:
         claim = fixid(claim)
+        claim = unescape_html(claim)
         clm = schema.App_Claim(**claim)
         app.claims.append(clm)
 
