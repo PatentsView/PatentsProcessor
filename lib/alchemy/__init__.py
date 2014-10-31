@@ -397,6 +397,7 @@ def add_all_app_fields(obj, app):
     add_app_inv(obj, app)
     add_app_classes(obj, app)
     add_app_claims(obj, app)
+    add_app_current_classes(obj, app)
 
 
 def add_app_asg(obj, app):
@@ -432,6 +433,19 @@ def add_app_classes(obj, app):
         uspc.mainclass = mc
         uspc.subclass = sc
         app.classes.append(uspc)
+
+
+def add_app_current_classes(obj, app):
+    for uspc_current, mc, sc in obj.us_classifications:
+        uspc_current = fixid(uspc_current)
+        uspc_current = schema.App_USPC_current(**uspc_current)
+        mc = schema.App_MainClass_current(**mc)
+        sc = schema.App_SubClass_current(**sc)
+        appsession.merge(mc)
+        appsession.merge(sc)
+        uspc_current.mainclass_current = mc
+        uspc_current.subclass_current = sc
+        app.current_classes.append(uspc_current)
 
 
 def add_app_ipcr(obj, app):
