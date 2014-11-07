@@ -47,6 +47,34 @@ claim_num_regex = re.compile(r'^\d+\. *') # removes claim number from claim text
 
 from HTMLParser import HTMLParser
 h = HTMLParser()
+#Type kind crosswalk - lookup table
+type_kind = {
+            "A": 'utility',   #Utility Patent issued prior to January 2, 2001. 
+            "A1": 'utility', #Utility Patent Application published on or after January 2, 2001. 
+            "A2": 'utility', #Second or subsequent publication of a Utility Patent Application. 
+            'A9': 'utility', #Corrected published Utility Patent Application. 
+            'Bn': 'reexamination certificate', #Reexamination Certificate issued prior to January 2, 2001. NOTE: "n" represents a value 1 through 9. 
+            'B1': 'utility', #Utility Patent (no pre-grant publication) issued on or after January 2, 2001. 
+            'B2': 'utility', #Utility Patent (with pre-grant publication) issued on or after January 2, 2001. 
+            'Cn': 'utility', #Reexamination Certificate issued on or after January 2, 2001. NOTE: "n" represents a value 1 through 9 denoting the publication level. 
+            'E1': 'reissue', #Reissue Patent. 
+            'Fn': 'reexamination certificate', #Reexamination Certificate of a Reissue Patent NOTE: "n" represents a value 1 through 9 denoting the publication level. 
+            'H1': 'statutoty invention registration', #Statutory Invention Registration (SIR) Patent Documents. SIR documents began with the December 3, 1985 issue. 
+            'I1': 'reissue', #"X" Patents issued from July 31, 1790 to July 13, 1836. 
+            'I2': 'reissue', #"X" Reissue Patents issued from July 31, 1790 to July 13, 1836. 
+            'I3': 'additional improvements', #Additional Improvements - Patents issued between 1838 and 1861. 
+            'I4': 'defensive publication', #Defensive Publication - Documents issued from November 5, 1968 through May 5, 1987. 
+            'I5': 'TVPP', #Trial Voluntary Protest Program (TVPP) Patent Documents. 
+            'NP': 'non-patent literature', #Non-Patent Literature. 
+            'P': 'plant', #Plant Patent issued prior to January 2, 2001. 
+            'P1': 'plant', #Plant Patent Application published on or after January 2, 2001. 
+            'P2': 'plant', #Plant Patent (no pre-grant publication) issued on or after January 2, 2001. 
+            'P3': 'plant', #Plant Patent (with pre-grant publication) issued on or after January 2, 2001. 
+            'P4': 'plant', #Second or subsequent publication of a Plant Patent Application. 
+            'P9': 'plant', #Correction publication of a Plant Patent Application. 
+            'S1': 'design', #Design Patent.
+            'NULL': 'NULL' #Placeholder for NULL values for duplicates and such.
+             }
 
 class Patent(PatentHandler):
 
@@ -75,7 +103,10 @@ class Patent(PatentHandler):
             self.country = ''
         self.application = xml_util.normalize_document_identifier(self.xml.document_id.contents_of('doc_number')[0])
         self.kind = self.xml.document_id.contents_of('kind_code')[0]
-        self.pat_type = None
+        try:
+            self.pat_type = type_kind[self.kind]
+        except:
+            self.pat_type = None
         self.date_app = self.xml.document_id.contents_of('document_date')[0]
         self.clm_num = len(self.xml.subdoc_claims.claim)
         #self.abstract = self.xml.subdoc_abstract.contents_of('paragraph', '', as_string=True, upper=False)
