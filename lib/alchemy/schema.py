@@ -384,8 +384,8 @@ class RawAssignee(GrantBase):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(128))
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
+    #residence = Column(Unicode(10))
+    #nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
     # -- Functions for Disambiguation --
@@ -396,9 +396,9 @@ class RawAssignee(GrantBase):
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
-            "organization": self.organization,
-            "residence": self.residence,
-            "nationality": self.nationality}
+            "organization": self.organization}
+            #"residence": self.residence,
+            #"nationality": self.nationality}
 
     @hybrid_property
     def __clean__(self):
@@ -568,8 +568,8 @@ class Assignee(GrantBase):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(256))
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
+    #residence = Column(Unicode(10))
+    #nationality = Column(Unicode(10))
     rawassignees = relationship("RawAssignee", backref="assignee")
 
     # -- Functions for Disambiguation --
@@ -581,9 +581,9 @@ class Assignee(GrantBase):
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
-            "organization": self.organization,
-            "residence": self.residence,
-            "nationality": self.nationality}
+            "organization": self.organization}
+            #"residence": self.residence,
+            #"nationality": self.nationality}
 
     @hybrid_property
     def __raw__(self):
@@ -876,8 +876,8 @@ class IPCR(GrantBase):
 class MainClass(GrantBase):
     __tablename__ = "mainclass"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #title = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("USPC", backref="mainclass")
 
     def __repr__(self):
@@ -888,7 +888,7 @@ class MainClass_current(GrantBase):
     __tablename__ = "mainclass_current"
     id = Column(Unicode(20), primary_key=True)
     title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc_current = relationship("USPC_current", backref="mainclass_current")
 
     def __repr__(self):
@@ -898,8 +898,8 @@ class MainClass_current(GrantBase):
 class SubClass(GrantBase):
     __tablename__ = "subclass"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #title = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("USPC", backref="subclass")
 
     def __repr__(self):
@@ -910,7 +910,7 @@ class SubClass_current(GrantBase):
     __tablename__ = "subclass_current"
     id = Column(Unicode(20), primary_key=True)
     title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc_current = relationship("USPC_current", backref="subclass_current")
 
     def __repr__(self):
@@ -930,7 +930,7 @@ class USPatentCitation(GrantBase):
     date = Column(Date)
     name = Column(Unicode(64))
     kind = Column(Unicode(10))
-    number = Column(Unicode(64))
+    #number = Column(Unicode(64))
     country = Column(Unicode(10))
     category = Column(Unicode(20))
     sequence = Column(Integer)
@@ -965,7 +965,7 @@ class ForeignCitation(GrantBase):
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     date = Column(Date)
-    kind = Column(Unicode(10))
+    #kind = Column(Unicode(10))
     number = Column(Unicode(64))
     country = Column(Unicode(10))
     category = Column(Unicode(20))
