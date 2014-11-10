@@ -1610,8 +1610,8 @@ class App_USPC_current(ApplicationBase):
 class App_MainClass(ApplicationBase):
     __tablename__ = "mainclass"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #title = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("App_USPC", backref="mainclass")
 
     def __repr__(self):
@@ -1622,7 +1622,7 @@ class App_MainClass_current(ApplicationBase):
     __tablename__ = "mainclass_current"
     id = Column(Unicode(20), primary_key=True)
     title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("App_USPC_current", backref="mainclass_current")
 
     def __repr__(self):
@@ -1632,8 +1632,8 @@ class App_MainClass_current(ApplicationBase):
 class App_SubClass(ApplicationBase):
     __tablename__ = "subclass"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #title = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("App_USPC", backref="subclass")
 
     def __repr__(self):
@@ -1644,7 +1644,7 @@ class App_SubClass_current(ApplicationBase):
     __tablename__ = "subclass_current"
     id = Column(Unicode(20), primary_key=True)
     title = Column(Unicode(256))
-    text = Column(Unicode(256))
+    #text = Column(Unicode(256))
     uspc = relationship("App_USPC_current", backref="subclass_current")
 
     def __repr__(self):
