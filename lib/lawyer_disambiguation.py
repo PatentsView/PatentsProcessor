@@ -150,13 +150,13 @@ def create_lawyer_table(session):
               lawyer_match(rawlawyers, session, commit=True)
           else:
               lawyer_match(rawlawyers, session, commit=False)
-    t1 = bulk_commit_inserts.delay(lawyer_insert_statements, Lawyer.__table__, alchemy.is_mysql(), 20000)
-    t2 = bulk_commit_inserts.delay(patentlawyer_insert_statements, patentlawyer, alchemy.is_mysql(), 20000)
-    t3 = bulk_commit_updates.delay('lawyer_id', update_statements, RawLawyer.__table__, alchemy.is_mysql(), 20000)
-    t1.get()
-    t2.get()
-    t3.get()
-    session.commit()
+    t1 = bulk_commit_inserts(lawyer_insert_statements, Lawyer.__table__, alchemy.is_mysql(), 20000, 'grant')
+    t2 = bulk_commit_inserts(patentlawyer_insert_statements, patentlawyer, alchemy.is_mysql(), 20000)
+    t3 = bulk_commit_updates('lawyer_id', update_statements, RawLawyer.__table__, alchemy.is_mysql(), 20000)
+    # t1.get()
+    # t2.get()
+    # t3.get()
+    # session.commit()
     print i, datetime.now()
 
 def lawyer_match(objects, session, commit=False):
@@ -202,6 +202,8 @@ def lawyer_match(objects, session, commit=False):
         param['residence'] = ''
     if not param.has_key('nationality'):
         param['nationality'] = ''
+    if not param.has_key('country'):
+        param['country'] = ''
 
     if param["organization"]:
       param["id"] = md5.md5(unidecode(param["organization"])).hexdigest()
