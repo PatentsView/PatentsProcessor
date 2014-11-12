@@ -249,6 +249,7 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_national.contents_of('main_classification')
+        print main
         crossrefsub = main[0][3:].replace(" ","")
         if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
             crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]

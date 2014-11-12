@@ -1285,8 +1285,8 @@ class App_RawAssignee(ApplicationBase):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(256))
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
+    #residence = Column(Unicode(10))
+    #nationality = Column(Unicode(10))
     sequence = Column(Integer, index=True)
 
     # -- Functions for Disambiguation --
@@ -1407,8 +1407,8 @@ class App_Assignee(ApplicationBase):
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
     organization = Column(Unicode(256))
-    residence = Column(Unicode(10))
-    nationality = Column(Unicode(10))
+    #residence = Column(Unicode(10))
+    #nationality = Column(Unicode(10))
     rawassignees = relationship("App_RawAssignee", backref="assignee")
 
     # -- Functions for Disambiguation --
@@ -1500,7 +1500,7 @@ class App_Inventor(ApplicationBase):
     id = Column(Unicode(36), primary_key=True)
     name_first = Column(Unicode(64))
     name_last = Column(Unicode(64))
-    nationality = Column(Unicode(10))
+    #nationality = Column(Unicode(10))
     rawinventors = relationship("App_RawInventor", backref="inventor")
 
     @hybrid_property
