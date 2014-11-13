@@ -909,7 +909,7 @@ class SubClass(GrantBase):
 class SubClass_current(GrantBase):
     __tablename__ = "subclass_current"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
+    title = Column(Unicode(512))
     #text = Column(Unicode(256))
     uspc_current = relationship("USPC_current", backref="subclass_current")
 
@@ -1643,7 +1643,7 @@ class App_SubClass(ApplicationBase):
 class App_SubClass_current(ApplicationBase):
     __tablename__ = "subclass_current"
     id = Column(Unicode(20), primary_key=True)
-    title = Column(Unicode(256))
+    title = Column(Unicode(512))
     #text = Column(Unicode(256))
     uspc = relationship("App_USPC_current", backref="subclass_current")
 
