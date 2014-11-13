@@ -405,7 +405,7 @@ def analyze_input_addresses(inputfilename):
 
 def construct_valid_input_addresses():
     valid_input_addresses = set()
-    temp = geo_data_session.query(RawGoogle.input_address).filter(RawGoogle.confidence>0)\
+    temp = geo_data_session.query(RawGoogle.input_address).filter(RawGoogle.confidence>0.1)\
                                 .filter((RawGoogle.city!='') | (RawGoogle.region!=''))
     for row in temp:
         input_address = row.input_address
