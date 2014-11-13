@@ -73,6 +73,7 @@ type_kind = {
             'P4': 'plant', #Second or subsequent publication of a Plant Patent Application. 
             'P9': 'plant', #Correction publication of a Plant Patent Application. 
             'S1': 'design', #Design Patent.
+            'S' : 'design',
             'NULL': 'NULL' #Placeholder for NULL values for duplicates and such.
              }
 
@@ -305,17 +306,17 @@ class Patent(PatentHandler):
             try:
                 temp = int(crossrefsub[3:])
                 if re.search('[A-Z]{3}',crossrefsub[0:3]) is None:
-                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+crossrefsub[3:]
                 else:
-                    subclass =re.sub('^0+','',crossrefsub[:3])+re.sub('^0+','',crossrefsub[3:])
+                    subclass =re.sub('^0+','',crossrefsub[:3])+crossrefsub[3:]
             except:
                 if len(re.sub('0+','',crossrefsub[3:])) > 1:
-                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+re.sub('0+','',crossrefsub[3:])
+                    subclass = re.sub('^0+','',crossrefsub[:3])+'.'+crossrefsub[3:]
                 else:
-                    subclass = re.sub('^0+','',crossrefsub[:3])+re.sub('0+','',crossrefsub[3:])    
+                    subclass = re.sub('^0+','',crossrefsub[:3])+crossrefsub[3:]    
         else:
             subclass = re.sub('^0+','',crossrefsub[:3])
-                
+        
         data = {'class': re.sub('^0+','',main.contents_of('class', as_string=True)),
               'subclass': subclass}
         if any(data.values()):
@@ -344,7 +345,7 @@ class Patent(PatentHandler):
                     subclass = re.sub('^0+','',crossrefsub[:3])
                 
         
-                data = {'class': classification.contents_of('class', as_string=True),
+                data = {'class': re.sub('^0+','',classification.contents_of('class', as_string=True)),
                         'subclass': subclass}
                 if any(data.values()):
                     classes.append([

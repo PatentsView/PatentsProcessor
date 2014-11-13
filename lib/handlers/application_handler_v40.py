@@ -254,8 +254,10 @@ class Patent(PatentHandler):
         crossrefsub = re.sub('^0+','',crossrefsub)
         if re.search('[A-Z]{3}',crossrefsub[:3]):
                 crossrefsub = crossrefsub.replace(".","")
+        crossrefsub = re.sub('\.000$','',crossrefsub)
+        crossrefsub = re.sub('0+$','',crossrefsub)
         
-        data = {'class': main[0][:3].replace(' ', ''),
+        data = {'class': re.sub('^0+','',main[0][:3].replace(' ', '')),
                 'subclass': crossrefsub}
         if any(data.values()):
             classes.append([
@@ -271,9 +273,11 @@ class Patent(PatentHandler):
                     crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
                 crossrefsub = re.sub('^0+','',crossrefsub)
                 if re.search('[A-Z]{3}',crossrefsub[:3]):
-                    crossrefsub = crossrefsub.replace(".","")
- 
-                data = {'class': classification[:3].replace(' ', ''),
+                        crossrefsub = crossrefsub.replace(".","")
+                crossrefsub = re.sub('\.000$','',crossrefsub)
+                crossrefsub = re.sub('0+$','',crossrefsub)
+                
+                data = {'class': re.sub('^0+','',classification[:3].replace(' ', '')),
                         'subclass': crossrefsub}
                 if any(data.values()):
                     classes.append([

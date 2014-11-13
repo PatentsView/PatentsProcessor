@@ -72,6 +72,7 @@ class Patent(PatentHandler):
         
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
+        print self.application
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_app = self.xml.publication_reference.contents_of('date')[0]
         if self.xml.application_reference:
@@ -249,15 +250,18 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_national.contents_of('main_classification')
-        crossrefsub = main[0][3:].replace(" ","")
+        if re.search('^\s+\d{3,4}$',main[0]):
+            mainidx = 2
+        else:
+            mainidx = 3
+        crossrefsub = main[0][mainidx:]
         if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
             crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
         crossrefsub = re.sub('^0+','',crossrefsub)
         if re.search('[A-Z]{3}',crossrefsub[:3]):
                 crossrefsub = crossrefsub.replace(".","")
-        
-        data = {'class': main[0][:3].replace(' ', ''),
-                'subclass': crossrefsub}
+        data = {'class': main[0][:mainidx].replace(' ', ''),
+                'subclass': crossrefsub.replace(" ",'')}
         if any(data.values()):
             classes.append([
                 {'uuid': str(uuid.uuid1()), 'sequence': i},
@@ -266,16 +270,24 @@ class Patent(PatentHandler):
             i = i + 1
         if self.xml.classification_national.further_classification:
             further = self.xml.classification_national.contents_of('further_classification')
+            print further
             for classification in further:
-                crossrefsub = classification[3:].replace(" ","")
+                if re.search('^\s+\d{3,4}$',classification):
+                    print classification
+                    mainidx = 2
+                else:
+                    mainidx = 3
+                crossrefsub = classification[mainidx:]
                 if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
                     crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
                 crossrefsub = re.sub('^0+','',crossrefsub)
                 if re.search('[A-Z]{3}',crossrefsub[:3]):
                     crossrefsub = crossrefsub.replace(".","")
  
-                data = {'class': classification[:3].replace(' ', ''),
-                        'subclass': crossrefsub}
+                data = {'class': classification[:mainidx].replace(' ', ''),
+                        'subclass': crossrefsub.replace(" ",'')}
+                print classification[:mainidx]
+                print crossrefsub
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},

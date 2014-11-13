@@ -50,6 +50,29 @@ h = HTMLParser()
 def unescape_html(x):
     return h.unescape(x)
 
+import htmlentitydefs
+
+_char = re.compile(r'&(\w+?);')
+    
+# Generate some extra HTML entities
+defs=htmlentitydefs.entitydefs
+defs['apos'] = "'"
+entities = open('htmlentities').read().split('\n')
+for e in entities:
+    try:
+        first = re.sub('\s+|\"|;|&','',e[3:15])
+        second = re.sub('\s+|\"|;|&','',e[15:24])
+        define = re.search("(?<=\s\s\').*?$",e).group()
+        defs[first] = define[:-1].encode('utf-8')
+        defs[second] = define[:-1].encode('utf-8')
+    except:
+        pass
+
+def _char_unescape(m, defs=defs):
+    try:
+        return defs[m.group(1)].encode('utf-8','ignore')
+    except:
+        return m.group()
 
 def fixid(x):
     if 'id' in x:
@@ -254,7 +277,7 @@ def add_all_fields(obj, pat):
 def add_asg(obj, pat):
     for asg, loc in obj.assignee_list:
         asg = fixid(asg)
-        asg = unescape_html(asg)
+        asg['organization'] = unescape_html(asg['organization'])
         loc = fixid(loc)
         asg = schema.RawAssignee(**asg)
         loc = schema.RawLocation(**loc)
@@ -351,7 +374,8 @@ def add_claims(obj, pat):
     claims = obj.claims
     for claim in claims:
         claim = fixid(claim)
-        claim = unescape_html(claim)
+        claim['text'] = unescape_html(claim['text'])
+        claim['text'] = _char.sub(_char_unescape,claim['text'])
         clm = schema.Claim(**claim)
         pat.claims.append(clm)
 
@@ -412,7 +436,7 @@ def add_app_asg(obj, app):
     for asg, loc in obj.assignee_list:
         loc = fixid(loc)
         asg = fixid(asg)
-        asg = unescape_html(asg)
+        asg['organization'] = unescape_html(asg['organization'])
         asg = schema.App_RawAssignee(**asg)
         loc = schema.App_RawLocation(**loc)
         appsession.merge(loc)
@@ -467,7 +491,8 @@ def add_app_claims(obj, app):
     claims = obj.claims
     for claim in claims:
         claim = fixid(claim)
-        claim = unescape_html(claim)
+        claim['text'] = unescape_html(claim['text'])
+        claim['text'] = _char.sub(_char_unescape,claim['text'])
         clm = schema.App_Claim(**claim)
         app.claims.append(clm)
 
