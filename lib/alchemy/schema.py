@@ -858,6 +858,7 @@ class CPC_current(GrantBase):
     __tablename__ = "cpc_current"
     uuid = Column(Unicode(36), primary_key=True)
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    section_id = Column(Unicode(10))
     subsection_id = Column(Unicode(20), ForeignKey("cpc_subsection.id"))
     group_id = Column(Unicode(20), ForeignKey("cpc_group.id"))
     subgroup_id = Column(Unicode(20), ForeignKey("cpc_subgroup.id"))
@@ -1652,6 +1653,7 @@ class App_CPC_current(ApplicationBase):
     __tablename__ = "cpc_current"
     uuid = Column(Unicode(36), primary_key=True)
     application_id = Column(Unicode(20), ForeignKey("application.id"))
+    section_id = Column(Unicode(10))
     subsection_id = Column(Unicode(20), ForeignKey("cpc_subsection.id"))
     group_id = Column(Unicode(20), ForeignKey("cpc_group.id"))
     subgroup_id = Column(Unicode(20), ForeignKey("cpc_subgroup.id"))
