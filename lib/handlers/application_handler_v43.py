@@ -72,7 +72,6 @@ class Patent(PatentHandler):
         
         self.country = self.xml.publication_reference.contents_of('country', upper=False)[0]
         self.application = xml_util.normalize_document_identifier(self.xml.publication_reference.contents_of('doc_number')[0])
-        print self.application
         self.kind = self.xml.publication_reference.contents_of('kind')[0]
         self.date_app = self.xml.publication_reference.contents_of('date')[0]
         if self.xml.application_reference:
@@ -270,10 +269,8 @@ class Patent(PatentHandler):
             i = i + 1
         if self.xml.classification_national.further_classification:
             further = self.xml.classification_national.contents_of('further_classification')
-            print further
             for classification in further:
                 if re.search('^\s+\d{3,4}$',classification):
-                    print classification
                     mainidx = 2
                 else:
                     mainidx = 3
@@ -286,8 +283,6 @@ class Patent(PatentHandler):
  
                 data = {'class': classification[:mainidx].replace(' ', ''),
                         'subclass': crossrefsub.replace(" ",'')}
-                print classification[:mainidx]
-                print crossrefsub
                 if any(data.values()):
                     classes.append([
                         {'uuid': str(uuid.uuid1()), 'sequence': i},
