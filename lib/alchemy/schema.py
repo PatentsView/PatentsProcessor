@@ -854,7 +854,20 @@ class USPC_current(GrantBase):
     def __repr__(self):
         return "<USPC_current('{1}')>".format(self.subclass_id)
 
+class CPC_current(GrantBase):
+    __tablename__ = "cpc_current"
+    uuid = Column(Unicode(36), primary_key=True)
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    section_id = Column(Unicode(10))
+    subsection_id = Column(Unicode(20), ForeignKey("cpc_subsection.id"))
+    group_id = Column(Unicode(20), ForeignKey("cpc_group.id"))
+    subgroup_id = Column(Unicode(20), ForeignKey("cpc_subgroup.id"))
+    category = Column(Unicode(36))
+    sequence = Column(Integer, index=True)
 
+    def __repr__(self):
+        return "<CPC_current('{1}')>".format(self.subgroup_id)
+    
 class IPCR(GrantBase):
     __tablename__ = "ipcr"
     uuid = Column(Unicode(36), primary_key=True)
@@ -916,6 +929,36 @@ class SubClass_current(GrantBase):
     def __repr__(self):
         return "<SubClass_current('{0}')>".format(self.id)
 
+
+class CPC_subsection(GrantBase):
+    __tablename__ = "cpc_subsection"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("CPC_current", backref="cpc_subsection")
+
+    def __repr__(self):
+        return "<CPC_subsection('{0}')>".format(self.id)
+
+class CPC_group(GrantBase):
+    __tablename__ = "cpc_group"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("CPC_current", backref="cpc_group")
+
+    def __repr__(self):
+        return "<CPC_group('{0}')>".format(self.id)
+
+class CPC_subgroup(GrantBase):
+    __tablename__ = "cpc_subgroup"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(512))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("CPC_current", backref="cpc_subgroup")
+
+    def __repr__(self):
+        return "<CPC_subgroup('{0}')>".format(self.id)
 
 # REFERENCES -----------------------
 
@@ -1606,6 +1649,20 @@ class App_USPC_current(ApplicationBase):
     def __repr__(self):
         return "<USPC_current('{1}')>".format(self.subclass_id)
 
+class App_CPC_current(ApplicationBase):
+    __tablename__ = "cpc_current"
+    uuid = Column(Unicode(36), primary_key=True)
+    application_id = Column(Unicode(20), ForeignKey("application.id"))
+    section_id = Column(Unicode(10))
+    subsection_id = Column(Unicode(20), ForeignKey("cpc_subsection.id"))
+    group_id = Column(Unicode(20), ForeignKey("cpc_group.id"))
+    subgroup_id = Column(Unicode(20), ForeignKey("cpc_subgroup.id"))
+    category = Column(Unicode(36))
+    sequence = Column(Integer, index=True)
+
+    def __repr__(self):
+        return "<CPC_current('{1}')>".format(self.subgroup_id)
+    
 
 class App_MainClass(ApplicationBase):
     __tablename__ = "mainclass"
@@ -1650,6 +1707,35 @@ class App_SubClass_current(ApplicationBase):
     def __repr__(self):
         return "<SubClass_current('{0}')>".format(self.id)
 
+class App_CPC_subsection(ApplicationBase):
+    __tablename__ = "cpc_subsection"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("App_CPC_current", backref="cpc_subsection")
+
+    def __repr__(self):
+        return "<CPC_subsection('{0}')>".format(self.id)
+
+class AppCPC_group(ApplicationBase):
+    __tablename__ = "cpc_group"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(256))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("App_CPC_current", backref="cpc_group")
+
+    def __repr__(self):
+        return "<CPC_group('{0}')>".format(self.id)
+
+class App_CPC_subgroup(ApplicationBase):
+    __tablename__ = "cpc_subgroup"
+    id = Column(Unicode(20), primary_key=True)
+    title = Column(Unicode(512))
+    #text = Column(Unicode(256))
+    cpc_current = relationship("App_CPC_current", backref="cpc_subgroup")
+
+    def __repr__(self):
+        return "<CPC_subgroup('{0}')>".format(self.id)
 
 # REFERENCES -----------------------
 
