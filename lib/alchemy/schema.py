@@ -635,10 +635,10 @@ class Assignee(GrantBase):
             self.name_last = kwargs["name_last"]
         if "organization" in kwargs:
             self.organization = kwargs["organization"]
-        if "residence" in kwargs:
-            self.residence = kwargs["residence"]
-        if "nationality" in kwargs:
-            self.nationality = kwargs["nationality"]
+        #if "residence" in kwargs:
+        #    self.residence = kwargs["residence"]
+        #if "nationality" in kwargs:
+        #    self.nationality = kwargs["nationality"]
 
     @classmethod
     def fetch(self, session, default={}):
@@ -1297,9 +1297,9 @@ class App_RawAssignee(ApplicationBase):
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
-            "organization": self.organization,
-            "residence": self.residence,
-            "nationality": self.nationality}
+            "organization": self.organization}
+            #"residence": self.residence,
+            #"nationality": self.nationality}
 
     @hybrid_property
     def __clean__(self):
@@ -1420,9 +1420,9 @@ class App_Assignee(ApplicationBase):
             "type": self.type,
             "name_first": self.name_first,
             "name_last": self.name_last,
-            "organization": self.organization,
-            "residence": self.residence,
-            "nationality": self.nationality}
+            "organization": self.organization}
+            #"residence": self.residence,
+            #"nationality": self.nationality}
 
     @hybrid_property
     def __raw__(self):
@@ -1473,10 +1473,10 @@ class App_Assignee(ApplicationBase):
             self.name_last = kwargs["name_last"]
         if "organization" in kwargs:
             self.organization = kwargs["organization"]
-        if "residence" in kwargs:
-            self.residence = kwargs["residence"]
-        if "nationality" in kwargs:
-            self.nationality = kwargs["nationality"]
+        #if "residence" in kwargs:
+        #    self.residence = kwargs["residence"]
+        #if "nationality" in kwargs:
+        #    self.nationality = kwargs["nationality"]
 
     @classmethod
     def fetch(self, session, default={}):
