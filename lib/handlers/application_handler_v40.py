@@ -248,43 +248,44 @@ class Patent(PatentHandler):
         classes = []
         i = 0
         main = self.xml.classification_national.contents_of('main_classification')
-        crossrefsub = main[0][3:].replace(" ","")
-        if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
-            crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
-        crossrefsub = re.sub('^0+','',crossrefsub)
-        if re.search('[A-Z]{3}',crossrefsub[:3]):
-                crossrefsub = crossrefsub.replace(".","")
-        crossrefsub = re.sub('\.000$','',crossrefsub)
-        crossrefsub = re.sub('0+$','',crossrefsub)
-        
-        data = {'class': re.sub('^0+','',main[0][:3].replace(' ', '')),
-                'subclass': crossrefsub}
-        if any(data.values()):
-            classes.append([
-                {'uuid': str(uuid.uuid1()), 'sequence': i},
-                {'id': data['class'].upper()},
-                {'id': "{class}/{subclass}".format(**data).upper()}])
-            i = i + 1
-        if self.xml.classification_national.further_classification:
-            further = self.xml.classification_national.contents_of('further_classification')
-            for classification in further:
-                crossrefsub = classification[3:].replace(" ","")
-                if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
-                    crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
-                crossrefsub = re.sub('^0+','',crossrefsub)
-                if re.search('[A-Z]{3}',crossrefsub[:3]):
-                        crossrefsub = crossrefsub.replace(".","")
-                crossrefsub = re.sub('\.000$','',crossrefsub)
-                crossrefsub = re.sub('0+$','',crossrefsub)
-                
-                data = {'class': re.sub('^0+','',classification[:3].replace(' ', '')),
-                        'subclass': crossrefsub}
-                if any(data.values()):
-                    classes.append([
-                        {'uuid': str(uuid.uuid1()), 'sequence': i},
-                        {'id': data['class'].upper()},
-                        {'id': "{class}/{subclass}".format(**data).upper()}])
-                    i = i + 1
+        if len(main[0]) > 0:
+            crossrefsub = main[0][3:].replace(" ","")
+            if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+                crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+            crossrefsub = re.sub('^0+','',crossrefsub)
+            if re.search('[A-Z]{3}',crossrefsub[:3]):
+                    crossrefsub = crossrefsub.replace(".","")
+            crossrefsub = re.sub('\.000$','',crossrefsub)
+            crossrefsub = re.sub('0+$','',crossrefsub)
+            
+            data = {'class': re.sub('^0+','',main[0][:3].replace(' ', '')),
+                    'subclass': crossrefsub}
+            if any(data.values()):
+                classes.append([
+                    {'uuid': str(uuid.uuid1()), 'sequence': i},
+                    {'id': data['class'].upper()},
+                    {'id': "{class}/{subclass}".format(**data).upper()}])
+                i = i + 1
+            if self.xml.classification_national.further_classification:
+                further = self.xml.classification_national.contents_of('further_classification')
+                for classification in further:
+                    crossrefsub = classification[3:].replace(" ","")
+                    if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
+                        crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
+                    crossrefsub = re.sub('^0+','',crossrefsub)
+                    if re.search('[A-Z]{3}',crossrefsub[:3]):
+                            crossrefsub = crossrefsub.replace(".","")
+                    crossrefsub = re.sub('\.000$','',crossrefsub)
+                    crossrefsub = re.sub('0+$','',crossrefsub)
+                    
+                    data = {'class': re.sub('^0+','',classification[:3].replace(' ', '')),
+                            'subclass': crossrefsub}
+                    if any(data.values()):
+                        classes.append([
+                            {'uuid': str(uuid.uuid1()), 'sequence': i},
+                            {'id': data['class'].upper()},
+                            {'id': "{class}/{subclass}".format(**data).upper()}])
+                        i = i + 1
         return classes
 
     @property
