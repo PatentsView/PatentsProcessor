@@ -161,10 +161,6 @@ def create_disambiguated_record_for_block(block):
         param['name_last'] = ''
     if not param.has_key('name_first'):
         param['name_first'] = ''
-    if not param.has_key('residence'):
-        param['residence'] = ''
-    if not param.has_key('nationality'):
-        param['nationality'] = ''
     if param.has_key('type'):
         if not param['type'].isdigit():
             param['type'] = ''
