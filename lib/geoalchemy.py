@@ -234,7 +234,7 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
             identified_grouped_locations.append({"raw_location": raw_location,
                                   "matching_location": matching_location,
                                   "grouping_id": grouping_id})
-            print 'all_cities found additional location for', raw_location
+            #print 'all_cities found additional location for', raw_location
 
 """
 looks like there are not enough records being put into "update_statements". When I look at the rawlocation
