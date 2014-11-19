@@ -874,6 +874,7 @@ class IPCR(GrantBase):
     patent_id = Column(Unicode(20), ForeignKey("patent.id"))
     classification_level = Column(Unicode(20))
     section = Column(Unicode(20))
+    ipc_class = Column(Unicode(20))
     subclass = Column(Unicode(20))
     main_group = Column(Unicode(20))
     subgroup = Column(Unicode(20))

@@ -442,7 +442,10 @@ class Patent(PatentHandler):
                         'class', 'subclass', 'main_group', 'subgroup', 'symbol_position',
                         'classification_value', 'classification_status',
                         'classification_data_source']:
-                data[tag] = ipcr.contents_of(tag, as_string=True)
+                if tag == 'class':
+                    data['ipc_class'] = ipcr.contents_of(tag, as_string=True)
+                else: 
+                    data[tag] = ipcr.contents_of(tag, as_string=True)
             data['ipc_version_indicator'] = self._fix_date(ipcr.ipc_version_indicator.contents_of('date', as_string=True))
             data['action_date'] = self._fix_date(ipcr.action_date.contents_of('date', as_string=True))
             if any(data.values()):
