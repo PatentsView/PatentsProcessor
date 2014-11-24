@@ -120,7 +120,7 @@ class Patent(PatentHandler):
         except:
             self.abstract = ''
         self.invention_title = h.unescape(self._invention_title())
-        self.filename = re.search('i?pa.*$',filename,re.DOTALL).group()
+        self.filename = re.search('i?pa[0-9]*.*$',filename,re.DOTALL).group()
         
         self.app = {
             "id": self.application,

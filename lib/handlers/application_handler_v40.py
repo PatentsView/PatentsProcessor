@@ -81,7 +81,7 @@ class Patent(PatentHandler):
         self.clm_num = len(self.xml.claims.claim)
         self.abstract = h.unescape(self.xml.abstract.contents_of('p', '', as_string=True, upper=False))
         self.invention_title = h.unescape(self._invention_title())
-        self.filename = re.search('ipa.*$',filename,re.DOTALL).group()
+        self.filename = re.search('i?pa[0-9]*.*$',filename,re.DOTALL).group()
         
         self.app = {
             "id": self.application,
