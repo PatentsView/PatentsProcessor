@@ -76,9 +76,9 @@ def _char_unescape(m, defs=defs):
 
 def fixid(x):
     if 'id' in x:
-        x['id'] = str(uuid.uuid1())
+        x['id'] = str(uuid.uuid4())
     elif 'uuid' in x:
-        x['uuid'] = str(uuid.uuid1())
+        x['uuid'] = str(uuid.uuid4())
     return x
 
 @event.listens_for(Pool, "checkout")
