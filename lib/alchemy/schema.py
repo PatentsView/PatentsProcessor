@@ -172,7 +172,7 @@ class Patent(GrantBase):
 class Application(GrantBase):
     __tablename__ = "application"
     id = Column(Unicode(36), primary_key=True)
-    patent_id = Column(Unicode(20), ForeignKey("patent.id"))
+    patent_id = Column(Unicode(20), ForeignKey("patent.id"), primary_key=True)
     type = Column(Unicode(20))
     number = Column(Unicode(64))
     country = Column(Unicode(20))
