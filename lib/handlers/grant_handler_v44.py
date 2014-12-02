@@ -188,7 +188,7 @@ class Patent(PatentHandler):
             loc['id'] = unidecode(u"|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(asg.values()) or any(loc.values()):
                 asg['sequence'] = i
-                asg['uuid'] = str(uuid.uuid1())
+                asg['uuid'] = str(uuid.uuid4())
                 res.append([asg, loc])
         return res
 
@@ -223,7 +223,7 @@ class Patent(PatentHandler):
                 data['text'] = citation.contents_of('othercit', as_string=True, upper=False)
                 if any(data.values()):
                     data['sequence'] = ocnt
-                    data['uuid'] = str(uuid.uuid1())
+                    data['uuid'] = str(uuid.uuid4())
                     other_cits.append(data)
                     ocnt += 1
             else:
@@ -235,7 +235,7 @@ class Patent(PatentHandler):
                 data['number'] = xml_util.normalize_document_identifier(doc_number)
                 if any(data.values()):
                     data['sequence'] = ccnt
-                    data['uuid'] = str(uuid.uuid1())
+                    data['uuid'] = str(uuid.uuid4())
                     regular_cits.append(data)
                     ccnt += 1
         return [regular_cits, other_cits]
@@ -270,7 +270,7 @@ class Patent(PatentHandler):
             loc['id'] = unidecode("|".join([loc['city'], loc['state'], loc['country']]).lower())
             if any(inv.values()) or any(loc.values()):
                 inv['sequence'] = i
-                inv['uuid'] = str(uuid.uuid1())
+                inv['uuid'] = str(uuid.uuid4())
                 res.append([inv, loc])
         return res
 
@@ -297,7 +297,7 @@ class Patent(PatentHandler):
             law['organization'] = lawyer.contents_of('orgname', as_string=True, upper=False)
             law['organization_upper'] = law['organization'].upper()
             if any(law.values()):
-                law['uuid'] = str(uuid.uuid1())
+                law['uuid'] = str(uuid.uuid4())
                 law['sequence'] = lawseq
                 res.append(law)
             lawseq+=1
@@ -344,7 +344,7 @@ class Patent(PatentHandler):
                 data['date'] = self._fix_date(data['date'])
                 if any(data.values()):
                     data['sequence'] = i
-                    data['uuid'] = str(uuid.uuid1())
+                    data['uuid'] = str(uuid.uuid4())
                     i = i + 1
                     res.append(data)
             for relation in reldoc.relation:
@@ -360,7 +360,7 @@ class Patent(PatentHandler):
                     data['relationship'] = relationship  # parent/child
                     if any(data.values()):
                         data['sequence'] = i
-                        data['uuid'] = str(uuid.uuid1())
+                        data['uuid'] = str(uuid.uuid4())
                         i = i + 1
                         res.append(data)
         return res
@@ -387,7 +387,7 @@ class Patent(PatentHandler):
                 'subclass': crossrefsub}
         if any(data.values()):
             classes.append([
-                {'uuid': str(uuid.uuid1()), 'sequence': i},
+                {'uuid': str(uuid.uuid4()), 'sequence': i},
                 {'id': data['class'].upper()},
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
@@ -405,7 +405,7 @@ class Patent(PatentHandler):
                         'subclass': crossrefsub}
                 if any(data.values()):
                     classes.append([
-                        {'uuid': str(uuid.uuid1()), 'sequence': i},
+                        {'uuid': str(uuid.uuid4()), 'sequence': i},
                         {'id': data['class'].upper()},
                         {'id': "{class}/{subclass}".format(**data).upper()}])
                     i = i + 1
@@ -449,7 +449,7 @@ class Patent(PatentHandler):
             data['action_date'] = self._fix_date(ipcr.action_date.contents_of('date', as_string=True))
             if any(data.values()):
                 data['sequence'] = i
-                data['uuid'] = str(uuid.uuid1())
+                data['uuid'] = str(uuid.uuid4())
                 res.append(data)
         return res
 
@@ -482,7 +482,7 @@ class Patent(PatentHandler):
                 data['text'] = re.sub('^\d+\.\s+','',data['text'])
                 data['text'] = re.sub('\s+',' ',data['text'])
                 data['sequence'] = i+1 # claims are 1-indexed
-                data['uuid'] = str(uuid.uuid1())
+                data['uuid'] = str(uuid.uuid4())
                 res.append(data)
         
         """
@@ -498,7 +498,7 @@ class Patent(PatentHandler):
                 # claim_refs are 'claim N', so we extract the N
                 data['dependent'] = int(claim.contents_of('claim_ref',\
                                         as_string=True).split(' ')[-1])
-            data['uuid'] = str(uuid.uuid1())
+            data['uuid'] = str(uuid.uuid4())
             res.append(data)
         """
         return res

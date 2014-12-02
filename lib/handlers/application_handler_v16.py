@@ -233,7 +233,7 @@ class Patent(PatentHandler):
                 loc['id'] = u''
             if any(asg.values()) or any(loc.values()):
                 asg['sequence'] = i
-                asg['uuid'] = str(uuid.uuid1())
+                asg['uuid'] = str(uuid.uuid4())
                 res.append([asg, loc])
         return res
 
@@ -270,7 +270,7 @@ class Patent(PatentHandler):
             del app['nationality']
             if any(app.values()) or any(loc.values()):
                 app['sequence'] = i
-                app['uuid'] = str(uuid.uuid1())
+                app['uuid'] = str(uuid.uuid4())
                 res.append([app, loc])
         return res
 
@@ -321,7 +321,7 @@ class Patent(PatentHandler):
               'subclass': subclass}
         if any(data.values()):
             classes.append([
-                {'uuid': str(uuid.uuid1()), 'sequence': i},
+                {'uuid': str(uuid.uuid4()), 'sequence': i},
                 {'id': data['class'].upper()},
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
@@ -349,7 +349,7 @@ class Patent(PatentHandler):
                         'subclass': subclass}
                 if any(data.values()):
                     classes.append([
-                        {'uuid': str(uuid.uuid1()), 'sequence': i},
+                        {'uuid': str(uuid.uuid4()), 'sequence': i},
                         {'id': data['class'].upper()},
                         {'id': "{class}/{subclass}".format(**data).upper()}])
                     i = i + 1
@@ -384,7 +384,7 @@ class Patent(PatentHandler):
                 data['text'] = re.sub('^\d+\.\s+','',data['text'])
                 data['text'] = re.sub('\s+',' ',data['text'])
                 data['sequence'] = i+1 # claims are 1-indexed
-                data['uuid'] = str(uuid.uuid1())
+                data['uuid'] = str(uuid.uuid4())
                 res.append(data)
         
         
