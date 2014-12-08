@@ -39,6 +39,7 @@ import re
 import sys
 from collections import defaultdict, Counter
 import pandas as pd
+import csv
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
@@ -106,7 +107,7 @@ class AllCities(base):
 def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     alchemy_session = alchemy.fetch_session(dbtype=doctype)
     t = datetime.datetime.now()
-    print "geocoding started", t
+    print "geocoding started", doctype, t
     #Construct a list of all addresses which Google was capable of identifying
     #Making this now allows it to be referenced quickly later
     valid_input_addresses = construct_valid_input_addresses()
@@ -153,6 +154,8 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
             unidentified_grouped_locations.append({"raw_location": instance,
                                                    "cleaned_location": cleaned_location,
                                                    "country": country})
+        if ((len(identified_grouped_locations)+len(unidentified_grouped_locations))%10000 == 0):
+            print "Processed", len(identified_grouped_locations)+len(unidentified_grouped_locations), datetime.datetime.now()
     print "locations grouped", datetime.datetime.now() - t
     print 'count of identified locations:', len(identified_grouped_locations)
     t = datetime.datetime.now()
@@ -183,6 +186,13 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     identified_grouped_locations_enum = enumerate(itertools.groupby(identified_grouped_locations, keyfunc))
     print "identified_grouped_locations sorted", datetime.datetime.now() - t
     t = datetime.datetime.now()
+
+    # Make sure the session is still alive - it will die after 8 hours of non-activity (per MySQL defaults)
+    try:
+        alchemy_session.execute('select 1;')
+    except:
+        alchemy_session = alchemy.fetch_session(dbtype=doctype)
+
     #Match the locations
     match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session)
 
@@ -203,6 +213,7 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
     #For each group of locations with the same country
     for i, item in unidentified_grouped_locations_enum:
         country, grouped_locations_list = item
+        print 'Missing for: ', country, datetime.datetime.now()
         #Get a list of all cities that exist anywhere in that country
         all_cities_in_country = geo_data_session.query(AllCities.city, AllCities.region).filter_by(country=country)
         #Construct a name for each location that matches the normal cleaned location format
@@ -229,11 +240,12 @@ def identify_missing_locations(unidentified_grouped_locations_enum,
                 matching_location = geo_data_session.query(AllCities).filter_by(city=city, country=country).first()
             if not matching_location:
                 print 'Warning: all_cities match attempt failed for', cleaned_location.encode('utf8'), 'location not found'
-            grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
-            raw_location = grouped_location["raw_location"]
-            identified_grouped_locations.append({"raw_location": raw_location,
-                                  "matching_location": matching_location,
-                                  "grouping_id": grouping_id})
+            else:
+                grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
+                raw_location = grouped_location["raw_location"]
+                identified_grouped_locations.append({"raw_location": raw_location,
+                                      "matching_location": matching_location,
+                                      "grouping_id": grouping_id})
             #print 'all_cities found additional location for', raw_location
 
 """
@@ -275,6 +287,14 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         #No need to run match() if no matching location was found.
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
+
+    # Fails because of unicode issues. Decided to not try further.
+    # headers = ['id','city','state','country','latitude','longitude']
+    # with open(u"location_insert_{0}.csv".format(doctype), 'w') as f:
+    #     writer = csv.DictWriter(f, headers)
+    #     writer.writeheader()
+    #     writer.writerows(location_insert_statements)
+
     if alchemy.is_mysql():
         alchemy_session.execute('truncate location; truncate location_assignee; truncate location_inventor;')
     else:
