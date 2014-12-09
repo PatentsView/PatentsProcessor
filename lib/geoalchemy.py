@@ -116,10 +116,12 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
         raw_parsed_locations = alchemy_session.query(alchemy.schema.RawLocation).limit(limit).offset(offset)
     elif doctype == 'application':
         raw_parsed_locations = alchemy_session.query(alchemy.schema.App_RawLocation).limit(limit).offset(offset)
+    raw_parsed_locations_count = raw_parsed_locations.count()
+
     #If there are no locations, there is no point in continuing
-    if raw_parsed_locations.count() == 0:
+    if raw_parsed_locations_count == 0:
         return False
-    print 'Constructed list of all parsed locations containing', raw_parsed_locations.count(), 'items'
+    print 'Constructed list of all parsed locations containing', raw_parsed_locations_count, 'items'
     """
     grouped_loations will contain a list of dicts. Each dict will contain three values:
     raw_location = Location object containing the original location found in the XML
@@ -159,6 +161,8 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print "locations grouped", datetime.datetime.now() - t
     print 'count of identified locations:', len(identified_grouped_locations)
     t = datetime.datetime.now()
+    alchemy_session.close()
+
 
     #We now have two lists of locations. First, consider the unmatched locations.
     keyfunc = lambda x:x["country"]
@@ -176,7 +180,7 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     #We now have a list of all locations in the file, along with their
     #matching locations and the id used to group them
     #Perform a quickfix to correct state names
-    geoalchemy_util.fix_state_abbreviations(identified_grouped_locations);
+    geoalchemy_util.fix_state_abbreviations(identified_grouped_locations)
 
     #Sort the list by the grouping_id
     keyfunc = lambda x: x['grouping_id']
@@ -187,16 +191,10 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     print "identified_grouped_locations sorted", datetime.datetime.now() - t
     t = datetime.datetime.now()
 
-    # Make sure the session is still alive - it will die after 8 hours of non-activity (per MySQL defaults)
-    try:
-        alchemy_session.execute('select 1;')
-    except:
-        alchemy_session = alchemy.fetch_session(dbtype=doctype)
+    alchemy_session = alchemy.fetch_session(dbtype=doctype)
 
     #Match the locations
     match_grouped_locations(identified_grouped_locations_enum, t, alchemy_session)
-
-    alchemy_session.commit()
 
     print "Matches made!", datetime.datetime.now() - t
     if doctype == 'grant':
@@ -204,7 +202,8 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
     elif doctype == 'application':
         unique_group_count = alchemy_session.query(expression.func.count(sqlalchemy.distinct(alchemy.schema.App_Location.id))).all()
 
-    print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations.count())
+    print "%s groups formed from %s locations" % (unique_group_count, raw_parsed_locations_count)
+    alchemy_session.close()
 
 #Identify locations that the Google disambiguation couldn't resolve
 def identify_missing_locations(unidentified_grouped_locations_enum,
@@ -288,13 +287,6 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
         if(grouping_id!="nolocationfound"):
             run_geo_match(grouping_id, default, match_group, i, t, alchemy_session)
 
-    # Fails because of unicode issues. Decided to not try further.
-    # headers = ['id','city','state','country','latitude','longitude']
-    # with open(u"location_insert_{0}.csv".format(doctype), 'w') as f:
-    #     writer = csv.DictWriter(f, headers)
-    #     writer.writeheader()
-    #     writer.writerows(location_insert_statements)
-
     if alchemy.is_mysql():
         alchemy_session.execute('truncate location; truncate location_assignee; truncate location_inventor;')
     else:
@@ -315,6 +307,7 @@ def match_grouped_locations(identified_grouped_locations_enum, t, alchemy_sessio
     session = session_generator()
 
     session.commit()
+    print 'Committed!!!'
 
 def run_geo_match(key, default, match_group, counter, runtime, alchemy_session):
     most_freq = 0
