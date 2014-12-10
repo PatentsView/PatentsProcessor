@@ -40,6 +40,8 @@ import sys
 from collections import defaultdict, Counter
 import pandas as pd
 import csv
+import codecs
+
 
 import alchemy
 from alchemy.match import commit_inserts, commit_updates
@@ -139,10 +141,18 @@ def main(limit=None, offset=0, minimum_match_value=0.8, doctype='grant'):
         if input_address_exists(valid_input_addresses, cleaned_location):
             matching_location = geo_data_session.query(RawGoogle).filter(
                                      RawGoogle.input_address==cleaned_location).first()
-            grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
-            identified_grouped_locations.append({"raw_location": instance,
-                                  "matching_location": matching_location,
-                                  "grouping_id": grouping_id})
+            if matching_location:
+                grouping_id = u"{0}|{1}".format(matching_location.latitude, matching_location.longitude)
+                identified_grouped_locations.append({"raw_location": instance,
+                                      "matching_location": matching_location,
+                                      "grouping_id": grouping_id})
+            else:
+                print 'Cleaned location not matched', cleaned_location
+                country = geoalchemy_util.get_country_from_cleaned(cleaned_location)
+                unidentified_grouped_locations.append({"raw_location": instance,
+                                                       "cleaned_location": cleaned_location,
+                                                       "country": country})
+
         else:
             """
             If there is no match in the raw_google database, we leave the location alone
