@@ -159,6 +159,7 @@ After Part 1 and Part 2 above are both complete, you will have individually popu
 	- 16.0h
 4. Merge the app DBs: `parser_wrapper.py --merge-db 1 --sourcedb app_20141215_2001,app_20141215_2002,app_20141215_2003,app_20141215_2004,app_20141215_2005,app_20141215_2006,app_20141215_2007,app_20141215_2008,app_20141215_2009,app_20141215_2010,app_20141215_2011,app_20141215_2012,app_20141215_2013,app_20141215_2014 --targetdb app_20141215 --mysql-host <removed> --mysql-username <removed> --mysql-passwd <removed>`
 	- 17.0h
+
 ## Part 4: Get Current Class Data
 1. Get the latest USPC current class assignments: `parser_wrapper.py --uspc-create 1 --uspc-input-dir f:\USPC_class`
 	- 9m
