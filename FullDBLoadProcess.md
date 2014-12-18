@@ -167,6 +167,7 @@ After Part 1 and Part 2 above are both complete, you will have individually popu
 	- 4.2h
 3. Upload the CPC current classes: `parser_wrapper.py --cpc-upload 1 --cpc-upload-dir f:\CPC_class --mysql-host <removed> --mysql-username <removed> --mysql-passwd <removed> --patdb patent_20141215 --appdb app_20141215`
 	- 7.2h
+4. Upload the NBER categories: `parser_wrapper.py --nber-upload 1 --nber-upload-dir f:\NBER_class --mysql-host <removed> --mysql-username <removed> --mysql-passwd <removed> --patdb patent_20141215`
 
 ## Part 5: Run Assignee, Lawyer, and Location Disambiguations
 1. Change dir to `d:\PatentsProcessor`
@@ -207,6 +208,17 @@ After Part 1 and Part 2 above are both complete, you will have individually popu
 12. `integrate.py disambiguator_December_11.tsv _disambiguator_output_cpp.tsv`
 	- 7.4h
 	- 50G
+
+## Part 7: Transformational script
+1. Change dir to 'd:/PatentsView-DB/Scripts/Transform_script'
+2. `python start.py --transform 1 --transform-upload-dir <upload-folder> --mysql-host <removed> --mysql-username <removed> --mysql-passwd <removed> --appdb <appdb> --patdb <patdb>`  
+	 - Transforms existing data in Applications and Patent DB by adding `_transformed` columns
+3. Run a SQL query on Application DB to create new `application_update` table: 'CREATE TABLE <appdb>.application_update LIKE <appdb>.application'
+4. `python start.py --update-appnums 1 --appnums-upload-dir <upload-folder> --mysql-host <removed> --mysql-username <removed> --mysql-passwd <removed> --appdb <appdb>`
+	- Creates a new updated table in Applications DB to populate number fields and granted flag
+	   * When data is updated: need to recreate the crosswalk between <patdb>.application and <appdb>.application numbers              to get the granted flag.
+
+
 
 ##End Results:
 Full populated and disambiguated patents and applications databases.
