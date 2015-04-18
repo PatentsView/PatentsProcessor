@@ -36,7 +36,7 @@ public class App
 
         String locationDatabase = config.getProperty("location.database");
         String locationPath = config.getProperty("location.path");
-        System.out.println(String.format("jdbc:sqlite:%s", locationDatabase));
+        System.out.println(String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase));
         Connection conn = DriverManager.getConnection(
                 String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase));
 
