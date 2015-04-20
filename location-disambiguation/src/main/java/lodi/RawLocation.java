@@ -45,7 +45,9 @@ public class RawLocation {
         this.country = city;
 
         String s = concatenateLocation(city, state, country);
+        s = cleanRawLocation(s);
 
+        this.cleanedLocation = s;
     }
 
 }

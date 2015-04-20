@@ -18,7 +18,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/junit/junit/4.11/junit-4.11.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/mysql/mysql-connector-java/5.1.35/mysql-connector-java-5.1.35.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/xerial/sqlite-jdbc/3.8.7/sqlite-jdbc-3.8.7.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar"/>
