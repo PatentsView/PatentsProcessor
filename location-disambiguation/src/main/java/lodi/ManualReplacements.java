@@ -1,9 +1,11 @@
 package lodi;
 
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.StringJoiner;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ManualReplacements {
@@ -29,6 +31,29 @@ public class ManualReplacements {
         private final LinkedList<String> replacements;
     }
 
+    public static ManualReplacements loadFromFile(String filename) 
+        throws java.io.IOException
+    {
+        Builder b = new Builder();
+        BufferedReader in = new BufferedReader(new FileReader(filename));
+
+        String line;
+        while ((line = in.readLine()) != null) {
+            line = line.trim();
+
+            // skip comments and empty lines
+            if (line.startsWith("#") || line.isEmpty())
+                continue;
+
+            String[] lineSplit = line.split("|");
+            b.add(lineSplit[0], lineSplit[1]);
+        }
+
+        in.close();
+
+        return b.build();
+    }
+
     public ManualReplacements(LinkedList<String> patterns, LinkedList<String> replacements) {
         if (patterns.size() != replacements.size())
             throw new IllegalArgumentException("`patterns` and `size` should have the same length");
@@ -43,11 +68,12 @@ public class ManualReplacements {
     }
 
     public String apply(String in) {
-        StringBuilder b1 = new StringBuilder();
-        StringBuilder b2 = new StringBuilder();
-        StringBuilder temp;
+        for (Map.Entry<Pattern, String> entry: replacements.entrySet()) {
+            Matcher m = entry.getKey().matcher(in);
+            in = m.replaceAll(entry.getValue());
+        }
 
-
+        return in;    
     }
 
     private final HashMap<Pattern, String> replacements;
