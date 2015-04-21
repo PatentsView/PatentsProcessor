@@ -4,16 +4,15 @@ import org.junit.*;
 import static org.junit.Assert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 
-public class ManualReplacementsTest {
+public class PatternReplacementsTest {
 
     @Test
     public void testApply() {
-        ManualReplacements rep = 
-            new ManualReplacements.Builder()
+        PatternReplacements rep = 
+            new PatternReplacements()
             .add("foo", "bar")
             .add(" x ", " y ")
-            .add("dog", "cat")
-            .build();
+            .add("dog", "cat");
 
         assertThat(rep.apply("hello, world"), is("hello, world"));
         assertThat(rep.apply("fooxfoo"), is("barxbar"));

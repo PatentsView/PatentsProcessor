@@ -47,3 +47,4 @@ dump.rdb # redis dump
 *.tsv
 .idea/
 mid.txt
+.metadata
