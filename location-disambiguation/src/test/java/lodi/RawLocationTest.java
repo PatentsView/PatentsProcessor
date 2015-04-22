@@ -17,4 +17,12 @@ public class RawLocationTest {
         s = RawLocation.concatenateLocation("washington", null, "us");
         assertThat(s, is("washington, us"));
     }
+
+    @Test
+    public void quickFixText() {
+        assertThat(RawLocation.quickFix("{blah blah (X)}"), is("X"));
+        assertThat(RawLocation.quickFix("{blah (Y) bah}"), is("Y"));
+        assertThat(RawLocation.quickFix("{(Z) blah buh}"), is("Z"));
+        assertThat(RawLocation.quickFix("(Z) blah buh"), is("(Z) blah buh"));
+    }
 }
