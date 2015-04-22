@@ -14,6 +14,7 @@
 # More likely, it is what remains of other removals, such as streets and addresses
 
 # start of line removal pattern
-^(late of|LATE OF)?[\-,/:;_& ]*||m
+^(late of)?[\-,/:;_& ]*||m
+^(LATE OF)?[\-,/:;_& ]*||m
 # start of line letter removal pattern
 ^( )*[A-Za-z][\-, ]+||m

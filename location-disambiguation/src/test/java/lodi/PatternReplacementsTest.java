@@ -11,12 +11,12 @@ public class PatternReplacementsTest {
         PatternReplacements rep = 
             new PatternReplacements()
             .add("foo", "bar")
-            .add(" x ", " y ")
+            .add(" x ")
             .add("dog", "cat");
 
         assertThat(rep.apply("hello, world"), is("hello, world"));
         assertThat(rep.apply("fooxfoo"), is("barxbar"));
-        assertThat(rep.apply("foo x foo"), is("bar y bar"));
+        assertThat(rep.apply("foo x foo"), is("barbar"));
         assertThat(rep.apply("foodog"), is("barcat"));
     }
 }

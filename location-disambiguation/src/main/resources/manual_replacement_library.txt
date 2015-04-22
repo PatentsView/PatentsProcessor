@@ -4,54 +4,54 @@
 &acirc;|å
 &acirc ;|å
 &angst;|Å
-{dot over (A)}|Å
-{dot over (a)}|å
+{dot over (A)}|Å|L
+{dot over (a)}|å|L
 #Inaccurate, but too many possibilities - this should be easier to debug
-{hacek over (a)}|a
+{hacek over (a)}|a|L
 .circle.|Å
-{overscore (A)}|Ä
+{overscore (A)}|Ä|L
 #Inaccurate, but too many possibilities - this should be easier to debug
-{overscore (a)}|a
-{umlaut over (Aa)}|Ää
-{acute over (&#x212b;)}|Å
+{overscore (a)}|a|L
+{umlaut over (Aa)}|Ää|L
+{acute over (&#x212b;)}|Å|L
 /e,uml/a/ |ä
 /a/ |ä
 /a/|ä
 #Inaccurate, but too many possibilities - this should be easier to debug
-{haeck over (a)}|a
+{haeck over (a)}|a|L
 #       b
 #       c
 &cacute;|ć
 &Cacute;|Ć
-{hacek over (C)}|Č
-{haeck over (C)}|Č
-{hacek over (c)}|č
+{hacek over (C)}|Č|L
+{haeck over (C)}|Č|L
+{hacek over (c)}|č|L
 #       d
-{hacek over (D)}|Ď
-{hacek over (d)}|ď
+{hacek over (D)}|Ď|L
+{hacek over (d)}|ď|L
 #       e
 &emacr;|ē
-{haeck over (e)}|ě
-{hacek over (e)}|ě
-{overscore (e)}|è
+{haeck over (e)}|ě|L
+{hacek over (e)}|ě|L
+{overscore (e)}|è|L
 #       f
 #       g
 &gacute;|ǵ
 #       h
 #       i
-{hacek over (i)}|i
+{hacek over (i)}|i|L
 #       j
 #       k
-{umlaut over (K)}|K
+{umlaut over (K)}|K|L
 #       l
-{umlaut over (L)}|L
+{umlaut over (L)}|L|L
 #       m
-{umlaut over (M)}|M
-{umlaut over (m)}|m
+{umlaut over (M)}|M|L
+{umlaut over (m)}|m|L
 #       n
 &nacute;|ń
-{haeck over (n)}|ñ
-{overscore (n)}|ñ
+{haeck over (n)}|ñ|L
+{overscore (n)}|ñ|L
 #       o
 &omacr;|ō
 #{hacek over (o)}|
@@ -64,42 +64,42 @@ uml/O/ |Ö
 .o slashed.|ø
 /o/ |ö
 /o/|ő
-{hacek over (o)}|ö
-{overscore (o)}|ö
+{hacek over (o)}|ö|L
+{overscore (o)}|ö|L
 #Inaccurate, but too many possibilities - this should be easier to debug
-{dot over (o)}|o
-{acute over (&#xf8;)}|ø
+{dot over (o)}|o|L
+{acute over (&#xf8;)}|ø|L
 #       p
 #       q
 #       r
 &racute;|ŕ
-{hacek over (r)}|ř
-{haeck over (r)} |ř
-{haeck over (r)}|ř
-{grave over (R)}|R
-{grave over (r)}|r
+{hacek over (r)}|ř|L
+{haeck over (r)} |ř|L
+{haeck over (r)}|ř|L
+{grave over (R)}|R|L
+{grave over (r)}|r|L
 #       s
 &sacute;|ś
 &scirc;|ŝ
-{haeck over (S)}|Š
-{hacek over (S)}|Š
-{hacek over (s)}|š
-{haeck over (s)}|š
-{umlaut over (S)}|S
+{haeck over (S)}|Š|L
+{hacek over (S)}|Š|L
+{hacek over (s)}|š|L
+{haeck over (s)}|š|L
+{umlaut over (S)}|S|L
  /s/ | sous 
 /s/|-sur-
 /S/|-sur-
-{dot over (s)}|s
+{dot over (s)}|s|L
 #       t
-{dot over (T)}okyo|Tokyo
+{dot over (T)}okyo|Tokyo|L
 #       u
 &utilde;|ũ
 /U/ |Ü
 /u/ |ü
 /u/|ü
-{overscore (u)}|ü
-{hacek over (u)}|ǔ
-{dot over (u)}|u
+{overscore (u)}|ü|L
+{hacek over (u)}|ǔ|L
+{dot over (u)}|u|L
 #       v
 #       w
 #       x
@@ -107,21 +107,21 @@ uml/O/ |Ö
 #       z
 &Zacute;|Ź
 &zacute;|ź
-{hacek over (Z)}|Ž
+{hacek over (Z)}|Ž|L
 #       Misspellings
 a/d/|aan den
-{hacek over (A)}lta|Älta
-{acute over (B)}uehl|Bühl
-{umlaut over (C)}ernilov|Černilov
+{hacek over (A)}lta|Älta|L
+{acute over (B)}uehl|Bühl|L
+{umlaut over (C)}ernilov|Černilov|L
 O/ d.ANG.kra|Ödåkra
-{haeck over (u)}ttenre{haeck over (u)}th|Uttenreuth
-D{haeck over (u)}sseldorf|Düsseldorf
-P{haeck over (u)}choen|Pocheon
-Gro{burgwedel|Großburgwedel
-B{umlaut over (j)}rringbro|Bjerringbro
-B{acute over (j)}&#xe1;rred|Bjärred
-Defreggerstra{e|Defreggerstraße
-Vaster{s|Västerås
+{haeck over (u)}ttenre{haeck over (u)}th|Uttenreuth|L
+D{haeck over (u)}sseldorf|Düsseldorf|L
+P{haeck over (u)}choen|Pocheon|L
+Gro{burgwedel|Großburgwedel|L
+B{umlaut over (j)}rringbro|Bjerringbro|L
+B{acute over (j)}&#xe1;rred|Bjärred|L
+Defreggerstra{e|Defreggerstraße|L
+Vaster{s|Västerås|L
 #       other
 .cent.|
 #&compfn;|&#x02218;
@@ -129,8 +129,8 @@ Vaster{s|Västerås
 &num;|#
 &plus;|+
 & Engraving;|& Engraving
-{umlaut over ( )}|
-{acute over (&#xe6;)}|æ
+{umlaut over ( )}||L
+{acute over (&#xe6;)}|æ|L
 &#x201c;A&#x201d;-Cdad. de|
 all of|
 all Of|
