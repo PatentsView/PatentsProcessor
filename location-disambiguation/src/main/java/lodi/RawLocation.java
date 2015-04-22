@@ -6,6 +6,9 @@ import java.net.URL;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.Normalizer;
+
+import org.jsoup.Jsoup;
 
 public class RawLocation {
 
@@ -47,6 +50,15 @@ public class RawLocation {
 
         text = manualReplacements.apply(text);
         text = quickFix(text);
+
+        // remove XML/HTML tags
+        text = Jsoup.parseBodyFragment(text).text();
+
+        // normalize unicode
+        text = Normalizer.normalize(text, Normalizer.Form.NFC);
+
+        text = removePatterns.apply(text); 
+        text = countryPatterns.apply(text);
 
         return text;
     }
