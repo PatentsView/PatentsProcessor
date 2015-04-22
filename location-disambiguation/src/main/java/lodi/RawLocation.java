@@ -4,16 +4,12 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.StringJoiner;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RawLocation {
 
-    public final static Pattern patEOL = Pattern.compile("[\r\n]");
-    public final static Pattern patSeparator = Pattern.compile("\\|", Pattern.UNICODE_CHARACTER_CLASS);
-
-    public final static PatternReplacements manualReplacements = initManualReplacements();
-
-    public static String concatenateLocation(final String city, final String country, final String state) {
+    public static String concatenateLocation(final String city, final String state, final String country) {
         StringJoiner j = new StringJoiner(", ");
 
         if (city != null && !city.isEmpty())
@@ -29,29 +25,54 @@ public class RawLocation {
     }
 
     public static String cleanRawLocation(String text) {
-        text = patEOL.matcher(text).replaceAll("");
-        text = patSeparator.matcher(text).replaceAll(", ");
+        text = eolPattern.matcher(text).replaceAll("");
+        text = separatorPattern.matcher(text).replaceAll(", ");
+
+        text = manualReplacements.apply(text);
+
         return text;
     }
 
+    protected final static Pattern eolPattern = Pattern.compile("[\r\n]");
+    protected final static Pattern separatorPattern = Pattern.compile("\\|", Pattern.UNICODE_CHARACTER_CLASS);
+    protected final static Pattern curlyPattern = Pattern.compile("\\{.*(.*).*\\}", Pattern.UNICODE_CHARACTER_CLASS);
+
+    protected final static PatternReplacements manualReplacements = initManualReplacements();
+    protected final static PatternReplacements removePatterns = initRemovePatterns();
+    protected final static PatternReplacements countryPatterns = initCountryPatterns();
+
+    protected static String quickFix(String text) {
+        Matcher m = curlyPattern.matcher(text);
+        return m.replaceAll(m.group(1));
+    }
+
     private static PatternReplacements initManualReplacements() {
-        return initPatternReplacements("manual_replacements_library.txt");
+        return initPatternReplacements("/manual_replacement_library.txt");
+    }
+
+    private static PatternReplacements initRemovePatterns() {
+        return initPatternReplacements("/remove_patterns.txt");
+    }
+
+    private static PatternReplacements initCountryPatterns() {
+        return initPatternReplacements("/country_patterns.txt");
     }
 
     private static PatternReplacements initPatternReplacements(String resource) {
         URL url = RawLocation.class.getResource(resource);
 
-        PatternReplacements mr = null;  
+        PatternReplacements pr = null;  
 
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream())))
+        try (BufferedReader in = 
+                new BufferedReader(new InputStreamReader(url.openStream())))
         {
-            mr = PatternReplacements.loadFromFile(in);
+            pr = PatternReplacements.loadFromFile(in);
         }
         catch(java.io.IOException e) {
             System.out.println("There was a problem reading '" + resource + "'");
         }
 
-        return mr;
+        return pr;
     }
     
     // fields taken from the database

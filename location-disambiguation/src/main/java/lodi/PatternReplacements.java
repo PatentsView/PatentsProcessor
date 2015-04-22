@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class PatternReplacements {
 
@@ -56,7 +57,13 @@ public class PatternReplacements {
     }
 
     public PatternReplacements add(String pattern, String replacement, int flags) {
-        replacements.put(Pattern.compile(pattern, flags), replacement);
+    	try {
+    		replacements.put(Pattern.compile(pattern, flags), replacement);
+    	}
+    	catch(PatternSyntaxException e) {
+    		System.out.println("Incorrect pattern syntax: " + pattern);
+    	}
+    	
         return this;
     }
 
