@@ -3,6 +3,11 @@ package lodi;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.LinkedList;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,6 +16,73 @@ import java.text.Normalizer;
 import org.jsoup.Jsoup;
 
 public class RawLocation {
+
+    public static class Record {
+        // fields taken from the database
+
+        public final String city;
+        public final String state;
+        public final String country;
+
+        // the cleaned field used for matching
+
+        public final String cleanedLocation;
+        public final String cleanedCountry;
+
+        public Record(final String city, final String state, final String country) {
+            this.city = city;
+            this.state = city;
+            this.country = city;
+
+            String s = concatenateLocation(city, state, country);
+            s = cleanRawLocation(s);
+
+            this.cleanedLocation = s;
+
+            if (country != null)
+                this.cleanedCountry = country;
+            else if (state != null)
+                this.cleanedCountry = state;
+            else
+                this.cleanedCountry = city;
+        }
+    }
+
+    /**
+     * Return a list of {@link RawLocation} objects from the database.
+     *
+     * @todo Check the query for correctness
+     *
+     * @param conn A database connection where the `rawlocation` table is found
+     * @param limit The number of records to return
+     * @param offset The offset into the database table to use
+     * @return A list of {@link RawLocation} objects from the database
+     */
+    public static LinkedList<Record> load(
+            final Connection conn,
+            int limit,
+            int offset) 
+        throws SQLException
+    {
+        LinkedList<Record> list = new LinkedList<>();
+        
+        PreparedStatement pstmt = conn.prepareStatement(
+                "select city, state, country_transformed from rawlocation " +
+                "where coalesce(city, state, country_transformed, '') <> '' " +
+                "limit ?, ?");
+        pstmt.setInt(1, offset);
+        pstmt.setInt(2, limit);
+        ResultSet rs = pstmt.executeQuery();
+
+        while (rs.next()) {
+            String city = rs.getString("city");
+            String state = rs.getString("state");
+            String country = rs.getString("country_transformed");
+            list.add(new Record(city, state, country));
+        }
+
+        return list;
+    }
 
     /**
      * Return the canonical String for this locale. The result is used in fuzzy string
@@ -117,26 +189,4 @@ public class RawLocation {
 
         return pr;
     }
-    
-    // fields taken from the database
-
-    public final String city;
-    public final String state;
-    public final String country;
-
-    // the cleaned field used for matching
-
-    public final String cleanedLocation;
-
-    public RawLocation(final String city, final String state, final String country) {
-        this.city = city;
-        this.state = city;
-        this.country = city;
-
-        String s = concatenateLocation(city, state, country);
-        s = cleanRawLocation(s);
-
-        this.cleanedLocation = s;
-    }
-
 }

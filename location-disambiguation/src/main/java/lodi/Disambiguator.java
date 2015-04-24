@@ -1,54 +1,22 @@
 package lodi;
 
-import java.sql.Connection;
-// import java.sql.DriverManager;
-// import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 public class Disambiguator {
 
-    public static HashSet<String> validInputAddresses(final Connection conn) 
-        throws SQLException
-    {
-        HashSet<String> set = new HashSet<>();
-        Statement stmt = conn.createStatement();
+    public static void disambiguate(List<RawLocation.Record> rawLocations, RawGoogle goog) {
 
-        ResultSet rs = stmt.executeQuery(
-                "select input_address " +
-                "from raw_google " +
-                "where confidence > 0.1 " +
-                "and (city <> '' or region <> '')");
+        ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
+            rawLocations
+            .parallelStream()
+            .collect(Collectors.groupingByConcurrent(loc -> goog.get(loc.cleanedLocation) != null));
 
-        while (rs.next())
-            set.add(rs.getString("input_address"));
+        List<RawLocation.Record> identifiedLocations = splitLocations.get(true);
+        List<RawLocation.Record> unidentifiedLocations = splitLocations.get(false);
 
-        return set;
+        int identifiedCount = (identifiedLocations == null) ? 0 : identifiedLocations.size();
+        System.out.println("Count of identified locations: " + identifiedCount);
     }
-
-    public static LinkedList<RawLocation> rawParsedLocations(
-            final Connection conn,
-            int limit,
-            int offset,
-            double minimum_match_value) 
-        throws SQLException
-    {
-        LinkedList<RawLocation> list = new LinkedList<>();
-        Statement stmt = conn.createStatement();
-        
-        ResultSet rs = stmt.executeQuery("select city, state, country from rawlocation");
-
-        while (rs.next()) {
-            String city = rs.getString("city");
-            String state = rs.getString("state");
-            String country = rs.getString("country");
-            list.add(new RawLocation(city, state, country));
-        }
-
-        return list;
-    }
-
 }
