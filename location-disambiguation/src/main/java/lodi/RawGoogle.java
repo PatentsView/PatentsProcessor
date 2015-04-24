@@ -3,7 +3,6 @@ package lodi;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
 import java.util.TreeMap;
 
@@ -60,6 +59,10 @@ public class RawGoogle {
             Record rec = new Record(inputAddress, city, region, country, latitude, longitude, confidence);
             map.put(rec.inputAddress, rec);
         }
+    }
+
+    public boolean containsKey(String cleanedLocation) {
+        return map.containsKey(cleanedLocation);
     }
 
     public Record get(String cleanedLocation) {

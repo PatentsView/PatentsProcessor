@@ -11,7 +11,7 @@ public class Disambiguator {
         ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
             rawLocations
             .parallelStream()
-            .collect(Collectors.groupingByConcurrent(loc -> goog.get(loc.cleanedLocation) != null));
+            .collect(Collectors.groupingByConcurrent(loc -> goog.containsKey(loc.cleanedLocation)));
 
         List<RawLocation.Record> identifiedLocations = splitLocations.get(true);
         List<RawLocation.Record> unidentifiedLocations = splitLocations.get(false);
