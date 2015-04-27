@@ -11,27 +11,16 @@ import java.util.TreeMap;
  */
 public class RawGoogle {
 
-    public static class Record {
+    public static class Record extends City{
         public final String inputAddress;
-        public final String city;
-        public final String region;
-        public final String country;
-        public final double latitude;
-        public final double longitude;
         public final double confidence;
-        public final String groupingID;
 
         public Record(String inputAddress, String city, String region, String country,
                       double latitude, double longitude, double confidence)
         {
+            super(city, region, country, latitude, longitude);
             this.inputAddress = inputAddress;
-            this.city = city;
-            this.region = region;
-            this.country = country;
-            this.latitude = latitude;
-            this.longitude = longitude;
             this.confidence = confidence;
-            this.groupingID = String.format("%s|%s", latitude, longitude);
         }
     }
 

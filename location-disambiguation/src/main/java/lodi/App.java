@@ -9,6 +9,8 @@ import java.sql.DriverManager;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang3.time.StopWatch;
+
 /**
  * Hello world!
  *
@@ -41,10 +43,8 @@ public class App
 
         double confidenceThreshold = 
             Double.parseDouble(config.getProperty("location.raw_google.confidence_threshold"));
-        RawGoogle goog = new RawGoogle(conn, confidenceThreshold);
-        System.out.format(
-                "Constructed list of valid Google input addresses (%d items)\n",
-                goog.size());
+
+        double matchThreshold = Double.parseDouble(config.getProperty("location.match_threshold"));
         
         String host = config.getProperty("mysql.host", "localhost");
         String port = config.getProperty("mysql.port", "3306");
@@ -56,8 +56,14 @@ public class App
         DriverManager.setLoginTimeout(10);
         Connection pdb = DriverManager.getConnection(url, user, password);
 
-        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, 100000, 0);
-        Disambiguator.disambiguate(rawLocations, goog);
+        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, 1000000, 0);
+
+        StopWatch watch = new StopWatch();
+        watch.start();
+
+        Disambiguator.disambiguate(conn, rawLocations, confidenceThreshold, matchThreshold);
+        watch.stop();
+        System.out.println("Elapsed time: " + watch);
 
         System.exit(0);
     }

@@ -35,6 +35,10 @@ public class RawLocation {
         public final String cleanedLocation;
         public final String cleanedCountry;
 
+        // linked City object
+
+        public City linkedCity;
+
         public Record(final String city, final String state, final String country) {
             this.city = city;
             this.state = city;
@@ -51,6 +55,8 @@ public class RawLocation {
                 this.cleanedCountry = state;
             else
                 this.cleanedCountry = city;
+
+            this.linkedCity = null;
         }
     }
 
