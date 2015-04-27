@@ -18,5 +18,12 @@ public class Disambiguator {
 
         int identifiedCount = (identifiedLocations == null) ? 0 : identifiedLocations.size();
         System.out.println("Count of identified locations: " + identifiedCount);
+
+        // first handle unmatched locations
+        
+        ConcurrentMap<String, List<RawLocation.Record>> unidentifiedGroupedLocations =
+            unidentifiedLocations
+            .parallelStream()
+            .collect(Collectors.groupingByConcurrent(loc -> loc.cleanedCountry));
     }
 }

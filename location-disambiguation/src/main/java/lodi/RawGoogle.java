@@ -10,6 +10,7 @@ import java.util.TreeMap;
  * This class loads the entire raw_google database into memory for efficient lookups.
  */
 public class RawGoogle {
+
     public static class Record {
         public final String inputAddress;
         public final String city;

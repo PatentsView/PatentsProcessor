@@ -15,8 +15,14 @@ import java.text.Normalizer;
 
 import org.jsoup.Jsoup;
 
+/**
+ * A raw location that needs to be disambiguated.
+ */
 public class RawLocation {
 
+    /**
+     * A RawLocation record.
+     */
     public static class Record {
         // fields taken from the database
 

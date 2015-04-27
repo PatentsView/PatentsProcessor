@@ -53,7 +53,9 @@ public class App
         String user = config.getProperty("mysql.user");
         String password = config.getProperty("mysql.password");
 
+        DriverManager.setLoginTimeout(10);
         Connection pdb = DriverManager.getConnection(url, user, password);
+
         List<RawLocation.Record> rawLocations = RawLocation.load(pdb, 100000, 0);
         Disambiguator.disambiguate(rawLocations, goog);
 
