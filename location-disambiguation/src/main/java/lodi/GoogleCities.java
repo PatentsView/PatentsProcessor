@@ -11,43 +11,43 @@ import java.util.TreeMap;
  */
 public class GoogleCities {
 
-    public static class Record extends City{
-        public final String inputAddress;
+    public static class Record {
+        public final String inputString;
         public final double confidence;
+        public final Cities.Record city;
 
-        public Record(String inputAddress, String city, String region, String country,
-                      double latitude, double longitude, double confidence)
+        public Record(String inputString, double confidence, Cities.Record city)
         {
-            super(city, region, country, latitude, longitude);
-            this.inputAddress = inputAddress;
+            this.inputString = inputString;
             this.confidence = confidence;
+            this.city = city;
         }
     }
 
-    public GoogleCities(Connection conn, double confidenceThreshold)
+    public GoogleCities(Connection conn, double confidenceThreshold, Cities cities)
         throws SQLException
     {
         map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
         PreparedStatement pstmt = conn.prepareStatement(
-                "select input_address, city, region, country, latitude, longitude, confidence " +
-                "from raw_google " +
+                "select input_string, city_id, confidence " +
+                "from google_cities " +
+                "join cities on cities.id = city_id " +
                 "where confidence > ? " +
                 "and (city <> '' or region <> '')");
+
         pstmt.setDouble(1, confidenceThreshold);
         ResultSet rs = pstmt.executeQuery();
                  
         while (rs.next()) {
-            String inputAddress = rs.getString(1);
-            String city = rs.getString(2);
-            String region = rs.getString(3);
-            String country = rs.getString(4);
-            double latitude = rs.getDouble(5);
-            double longitude = rs.getDouble(6);
-            double confidence = rs.getDouble(7);
+            String inputString = rs.getString(1);
+            int cityId = rs.getInt(2);
+            double confidence = rs.getDouble(3);
 
-            Record rec = new Record(inputAddress, city, region, country, latitude, longitude, confidence);
-            map.put(rec.inputAddress, rec);
+            Cities.Record city = cities.get(cityId);
+
+            Record rec = new Record(inputString, confidence, city);
+            map.put(rec.inputString, rec);
         }
     }
 

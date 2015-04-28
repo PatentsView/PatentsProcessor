@@ -37,7 +37,7 @@ public class RawLocation {
 
         // linked City object
 
-        public City linkedCity;
+        public Cities.Record linkedCity;
 
         public Record(final String city, final String state, final String country) {
             this.city = city;

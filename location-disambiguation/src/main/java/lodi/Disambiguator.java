@@ -28,7 +28,12 @@ public class Disambiguator {
         throws SQLException
     {
 
-        GoogleCities goog = new GoogleCities(conn, googleConfidenceThreshold);
+        Cities cities = new Cities(conn);
+        System.out.format(
+                "Constructed list of cities (%d items)\n",
+                cities.size());
+
+        GoogleCities goog = new GoogleCities(conn, googleConfidenceThreshold, cities);
         System.out.format(
                 "Constructed list of valid Google input addresses (%d items)\n",
                 goog.size());
@@ -45,7 +50,7 @@ public class Disambiguator {
         // and I'm not sure it's enough of a performance gain to be worth it.
 
         identifiedLocations.parallelStream()
-            .forEach(loc -> loc.linkedCity = goog.get(loc.cleanedLocation));
+            .forEach(loc -> loc.linkedCity = goog.get(loc.cleanedLocation).city);
 
         int identifiedCount = (identifiedLocations == null) ? 0 : identifiedLocations.size();
         System.out.println("Count of identified locations: " + identifiedCount);
@@ -59,7 +64,7 @@ public class Disambiguator {
 
         for  (Map.Entry<String, List<RawLocation.Record>> entry: unidentifiedGroupedLocations.entrySet()) {
             List<RawLocation.Record> rawCities = entry.getValue();
-            List<City> cities = Cities.load(conn, entry.getKey());
+            List<Cities.Record> cityList = cities.getCountry(entry.getKey());
 
             System.out.println(
                     String.format("Missing for: %s (%d locations, %d known cities)", 
@@ -69,9 +74,9 @@ public class Disambiguator {
 
             rawCities.parallelStream()
                 .forEach(loc -> {
-                    CityScore cscore = bestScore(loc, cities);
+                    CityScore cscore = bestScore(loc, cityList);
 
-                    if (cscore.score > matchThreshold && cscore.city.location != loc.country)
+                    if (cscore.score > matchThreshold && cscore.city.stringValue != loc.country)
                         loc.linkedCity = cscore.city;
                 });
         }
@@ -89,10 +94,10 @@ public class Disambiguator {
     }
 
     protected static class CityScore {
-        public final City city;
+        public final Cities.Record city;
         public final double score;
 
-        public CityScore(City city, double score) {
+        public CityScore(Cities.Record city, double score) {
             this.city = city;
             this.score = score;
         }
@@ -102,12 +107,12 @@ public class Disambiguator {
         }
     }
 
-    protected static CityScore score(RawLocation.Record raw, City city) {
-        double score = StringUtils.getJaroWinklerDistance(raw.cleanedLocation, city.location);
+    protected static CityScore score(RawLocation.Record raw, Cities.Record city) {
+        double score = StringUtils.getJaroWinklerDistance(raw.cleanedLocation, city.stringValue);
         return new CityScore(city, score);
     }
 
-    protected static CityScore bestScore(RawLocation.Record raw, List<City> cities) {
+    protected static CityScore bestScore(RawLocation.Record raw, List<Cities.Record> cities) {
         Optional<CityScore> maxScore = cities.stream()
             .map(c -> score(raw, c))
             .reduce(CityScore::max);
