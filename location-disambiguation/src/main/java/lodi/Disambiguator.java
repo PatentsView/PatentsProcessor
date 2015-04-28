@@ -28,7 +28,7 @@ public class Disambiguator {
         throws SQLException
     {
 
-        RawGoogle goog = new RawGoogle(conn, googleConfidenceThreshold);
+        GoogleCities goog = new GoogleCities(conn, googleConfidenceThreshold);
         System.out.format(
                 "Constructed list of valid Google input addresses (%d items)\n",
                 goog.size());
@@ -59,7 +59,7 @@ public class Disambiguator {
 
         for  (Map.Entry<String, List<RawLocation.Record>> entry: unidentifiedGroupedLocations.entrySet()) {
             List<RawLocation.Record> rawCities = entry.getValue();
-            List<City> cities = AllCities.load(conn, entry.getKey());
+            List<City> cities = Cities.load(conn, entry.getKey());
 
             System.out.println(
                     String.format("Missing for: %s (%d locations, %d known cities)", 
@@ -118,6 +118,4 @@ public class Disambiguator {
             return new CityScore(null, -1);
     }
 
-    // protected Scored<City> bestMatch(RawLocation.Record raw, List<AllCities.Record> cities) {
-    // }
 }

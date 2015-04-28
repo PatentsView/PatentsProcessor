@@ -9,7 +9,7 @@ import java.util.TreeMap;
 /**
  * This class loads the entire raw_google database into memory for efficient lookups.
  */
-public class RawGoogle {
+public class GoogleCities {
 
     public static class Record extends City{
         public final String inputAddress;
@@ -24,7 +24,7 @@ public class RawGoogle {
         }
     }
 
-    public RawGoogle(Connection conn, double confidenceThreshold)
+    public GoogleCities(Connection conn, double confidenceThreshold)
         throws SQLException
     {
         map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);

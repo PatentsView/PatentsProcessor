@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 
-public class AllCities {
+public class Cities {
 
     /**
      * Return list of all cities in the given country.
