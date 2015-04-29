@@ -8,9 +8,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.text.Normalizer;
 
 import org.jsoup.Jsoup;
@@ -21,11 +23,12 @@ import org.jsoup.Jsoup;
 public class RawLocation {
 
     /**
-     * A RawLocation record.
+     * A cleaned RawLocation record.
      */
     public static class Record {
-        // fields taken from the database
 
+        public final String locationId;
+        public final String inventorId;
         public final String city;
         public final String state;
         public final String country;
@@ -39,24 +42,39 @@ public class RawLocation {
 
         public Cities.Record linkedCity;
 
-        public Record(final String city, final String state, final String country) {
+        public Record(String locationId, String inventorId, String city, String state, String country) {
+            this.locationId = locationId;
+            this.inventorId = inventorId;
+            
+            if (city != null)
+                city = cleanRawLocation(city.trim());
+
+            if (state != null)
+                state = cleanRawLocation(state.trim());
+
+            if (country != null) {
+                country = cleanRawLocation(country.trim());
+                country = countryPatterns.apply(country);
+
+                if (country.equalsIgnoreCase("US") && state != null) {
+                    state = statePatterns.apply(state);
+                }
+            }
+
             this.city = city;
-            this.state = city;
-            this.country = city;
+            this.state = state;
+            this.country = country;
 
-            String s = concatenateLocation(city, state, country);
-            s = cleanRawLocation(s);
+            this.cleanedLocation = concatenateLocation(city, state, country);
 
-            this.cleanedLocation = s;
-
-            if (country != null)
-                this.cleanedCountry = country;
-            else if (state != null)
-                this.cleanedCountry = state;
-            else
-                this.cleanedCountry = city;
+            String[] parts = this.cleanedLocation.split(",");
+            this.cleanedCountry = parts[parts.length - 1].trim();
 
             this.linkedCity = null;
+        }
+
+        public Record(RawRecord raw) {
+            this(raw.locationId, raw.inventorId, raw.city, raw.state, raw.country);
         }
     }
 
@@ -70,30 +88,46 @@ public class RawLocation {
      * @param offset The offset into the database table to use
      * @return A list of {@link RawLocation} objects from the database
      */
-    public static LinkedList<Record> load(
+    public static List<Record> load(
             final Connection conn,
             int limit,
             int offset) 
         throws SQLException
     {
-        LinkedList<Record> list = new LinkedList<>();
-        
-        PreparedStatement pstmt = conn.prepareStatement(
-                "select city, state, country_transformed from rawlocation " +
-                "where coalesce(city, state, country_transformed, '') <> '' " +
-                "limit ?, ?");
-        pstmt.setInt(1, offset);
-        pstmt.setInt(2, limit);
-        ResultSet rs = pstmt.executeQuery();
+        LinkedList<RawRecord> list = new LinkedList<>();
 
-        while (rs.next()) {
-            String city = rs.getString("city");
-            String state = rs.getString("state");
-            String country = rs.getString("country_transformed");
-            list.add(new Record(city, state, country));
+        String sql = 
+            "select rawinventor.inventor_id, rawlocation.id, " +
+            "       city, state, country_transformed " +
+            "from rawlocation " +
+            "join rawinventor on rawinventor.rawlocation_id = rawlocation.id " +
+            "where coalesce(city, state, country_transformed, '') <> '' " +
+            "limit ?, ?";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, offset);
+            pstmt.setInt(2, limit);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String inventorId = rs.getString(1);
+                String locationId = rs.getString(2);
+                String city = rs.getString(3);
+                String state = rs.getString(4);
+                String country = rs.getString(5);
+                list.add(new RawRecord(locationId, inventorId, city, state, country));
+            }
         }
 
-        return list;
+        // convert raw records to cleaned records in parallel
+
+        List<Record> result =
+            list
+            .parallelStream()
+            .map(Record::new)
+            .collect(Collectors.toList());
+
+        return result;
     }
 
     /**
@@ -110,13 +144,13 @@ public class RawLocation {
         StringJoiner j = new StringJoiner(", ");
 
         if (city != null && !city.isEmpty())
-            j.add(city);
+            j.add(city.trim());
 
         if (state != null && !state.isEmpty())
-            j.add(state);
+            j.add(state.trim());
 
         if (country != null && !country.isEmpty())
-            j.add(country);
+            j.add(country.trim());
 
         return j.toString();
     }
@@ -142,9 +176,31 @@ public class RawLocation {
         text = Normalizer.normalize(text, Normalizer.Form.NFC);
 
         text = removePatterns.apply(text); 
-        text = countryPatterns.apply(text);
+
+        // only apply this to actual country field
+        // text = countryPatterns.apply(text);
 
         return text;
+    }
+
+    /**
+     * A raw RawLocation record. Records are first saved in this intermediate form so that
+     * data cleaning can be parallelized. 
+     */
+    protected static class RawRecord {
+        public final String locationId;
+        public final String inventorId;
+        public final String city;
+        public final String state;
+        public final String country;
+
+        public RawRecord(String locationId, String inventorId, String city, String state, String country) {
+            this.locationId = locationId;
+            this.inventorId = inventorId;
+            this.city = city;
+            this.state = state;
+            this.country = country;
+        }
     }
 
     protected final static Pattern eolPattern = Pattern.compile("[\r\n]");
@@ -154,6 +210,7 @@ public class RawLocation {
     protected final static PatternReplacements manualReplacements = initManualReplacements();
     protected final static PatternReplacements removePatterns = initRemovePatterns();
     protected final static PatternReplacements countryPatterns = initCountryPatterns();
+    protected final static PatternReplacements statePatterns = initStatePatterns();
 
     /**
      * Perform additional text fixes that can't be expressed as a simple pattern
@@ -183,6 +240,10 @@ public class RawLocation {
 
     private static PatternReplacements initCountryPatterns() {
         return initPatternReplacements("/country_patterns.txt");
+    }
+
+    private static PatternReplacements initStatePatterns() {
+        return initPatternReplacements("/state_abbreviations.txt");
     }
 
     private static PatternReplacements initPatternReplacements(String resource) {

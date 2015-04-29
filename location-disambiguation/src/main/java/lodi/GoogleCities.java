@@ -28,26 +28,28 @@ public class GoogleCities {
         throws SQLException
     {
         map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        
+        String sql = 
+            "select input_string, city_id, confidence " +
+            "from google_cities " +
+            "join cities on cities.id = city_id " +
+            "where confidence > ? " +
+            "and (city <> '' or region <> '')";
 
-        PreparedStatement pstmt = conn.prepareStatement(
-                "select input_string, city_id, confidence " +
-                "from google_cities " +
-                "join cities on cities.id = city_id " +
-                "where confidence > ? " +
-                "and (city <> '' or region <> '')");
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setDouble(1, confidenceThreshold);
+            ResultSet rs = pstmt.executeQuery();
+                     
+            while (rs.next()) {
+                String inputString = rs.getString(1);
+                int cityId = rs.getInt(2);
+                double confidence = rs.getDouble(3);
 
-        pstmt.setDouble(1, confidenceThreshold);
-        ResultSet rs = pstmt.executeQuery();
-                 
-        while (rs.next()) {
-            String inputString = rs.getString(1);
-            int cityId = rs.getInt(2);
-            double confidence = rs.getDouble(3);
+                Cities.Record city = cities.get(cityId);
 
-            Cities.Record city = cities.get(cityId);
-
-            Record rec = new Record(inputString, confidence, city);
-            map.put(rec.inputString, rec);
+                Record rec = new Record(inputString, confidence, city);
+                map.put(rec.inputString, rec);
+            }
         }
     }
 

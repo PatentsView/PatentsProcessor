@@ -19,11 +19,12 @@ public class PatternReplacements {
      *     PATTERN|REPLACEMENT|FLAGS
      *  PATTERN should be a regular expression or sequence of characters to search for.
      *  REPLACEMENT is the text that should replace PATTERN in the text. FLAGS can be used
-     *  to indicate additional flags to be passed to {@link Pattern#compile}. 
-     *  The following flags are currently supported:
+     *  to indicate additional flags to be passed
+     *  to {@link Pattern#compile}.  The following flags are currently supported:
      *      u: UNICODE_CHARACTER_CLASS
      *      L: LITERAL
      *      m: MULTILINE
+     *      i: CASE_INSENSITIVE
      *
      *  If no flags are required, the line can be shortened to
      *      PATTERN|REPLACEMENT
@@ -74,6 +75,8 @@ public class PatternReplacements {
                             case 'L': flags |= Pattern.LITERAL;
                                       break;
                             case 'm': flags |= Pattern.MULTILINE;
+                                      break;
+                            case 'i': flags |= Pattern.CASE_INSENSITIVE;
                                       break;
                         }
                     }

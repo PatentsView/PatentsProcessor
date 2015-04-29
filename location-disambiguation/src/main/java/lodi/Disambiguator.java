@@ -28,15 +28,13 @@ public class Disambiguator {
         throws SQLException
     {
 
+        System.out.print("Loading cities table... ");
         Cities cities = new Cities(conn);
-        System.out.format(
-                "Constructed list of cities (%d items)\n",
-                cities.size());
+        System.out.format("got %d records\n", cities.size());
 
+        System.out.print("Loading google_cities table... ");
         GoogleCities goog = new GoogleCities(conn, googleConfidenceThreshold, cities);
-        System.out.format(
-                "Constructed list of valid Google input addresses (%d items)\n",
-                goog.size());
+        System.out.format("got %d records\n", goog.size());
 
         ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
             rawLocations
@@ -55,42 +53,77 @@ public class Disambiguator {
         int identifiedCount = (identifiedLocations == null) ? 0 : identifiedLocations.size();
         System.out.println("Count of identified locations: " + identifiedCount);
 
-        // first handle unmatched locations
+        // handle unmatched locations
         
+        // group unidentified locations by country
+
         ConcurrentMap<String, List<RawLocation.Record>> unidentifiedGroupedLocations =
             unidentifiedLocations
             .parallelStream()
-            .collect(Collectors.groupingByConcurrent(loc -> loc.cleanedCountry));
+            .collect(Collectors.groupingByConcurrent(Disambiguator::countryGroup));
 
-        for  (Map.Entry<String, List<RawLocation.Record>> entry: unidentifiedGroupedLocations.entrySet()) {
-            List<RawLocation.Record> rawCities = entry.getValue();
-            List<Cities.Record> cityList = cities.getCountry(entry.getKey());
+        for  (final Map.Entry<String, List<RawLocation.Record>> entry: unidentifiedGroupedLocations.entrySet()) {
+
+            List<RawLocation.Record> countryLocations = entry.getValue();
+
+            // group locations by unique cleanedLocation
+
+            Map<String, List<RawLocation.Record>> rawCities =
+                countryLocations
+                .stream()
+                .collect(Collectors.groupingBy(loc -> loc.cleanedLocation));
+
+            // get database cities from this country
+
+            String country = entry.getKey();
+            List<Cities.Record> cityList;
+
+            if (country.startsWith("::")) {
+                // this "country" encodes a US state (see #countryGroup)
+                String state = country.substring(2);
+                cityList = cities.getState(state);
+            } else {
+                cityList = cities.getCountry(country);
+            }
+
+            int cityCount = (cityList == null) ? 0 : cityList.size();
 
             System.out.println(
-                    String.format("Missing for: %s (%d locations, %d known cities)", 
-                                  entry.getKey(), rawCities.size(), cities.size()));
+                    String.format("Missing for: %s (%d locations, %d unique, %d known cities)", 
+                                  country, countryLocations.size(), rawCities.size(), cityCount));
 
             // for each unmatched location in this country, find the best matching city
 
-            rawCities.parallelStream()
-                .forEach(loc -> {
-                    CityScore cscore = bestScore(loc, cityList);
+            rawCities.keySet()
+                .parallelStream()
+                .forEach(rawString -> {
+                    CityScore cscore = bestScore(rawString, cityList);
 
-                    if (cscore.score > matchThreshold && cscore.city.stringValue != loc.country)
-                        loc.linkedCity = cscore.city;
+                    if (cscore.score > matchThreshold && cscore.city.stringValue != country)
+                        rawCities.get(rawString).stream().forEach(loc -> loc.linkedCity = cscore.city);
                 });
         }
 
-        ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations2 =
+        List<RawLocation.Record> finalLinked =
             rawLocations
             .parallelStream()
-            .collect(Collectors.groupingByConcurrent(loc -> loc.city != null));
+            .filter(loc -> loc.linkedCity != null)
+            .collect(Collectors.toList());
 
-        List<RawLocation.Record> identifiedLocations2 = splitLocations2.get(true);
-        // List<RawLocation.Record> unidentifiedLocations2 = splitLocations2.get(false);
+        System.out.println("Count of identified locations (2nd pass): " + finalLinked.size());
+    }
 
-        int identifiedCount2 = (identifiedLocations2 == null) ? 0 : identifiedLocations2.size();
-        System.out.println("Count of identified locations (2nd pass): " + identifiedCount2);
+    /**
+     * Create a special "country" code for US states. This is used when splitting up the
+     * raw locations by country. This is a little hacky but works.
+     */
+    protected static String countryGroup(RawLocation.Record loc) {
+        if (loc.cleanedCountry.equalsIgnoreCase("US")) {
+            return String.format("::%s", loc.state);
+        }
+        else {
+            return loc.cleanedCountry;
+        }
     }
 
     protected static class CityScore {
@@ -107,14 +140,17 @@ public class Disambiguator {
         }
     }
 
-    protected static CityScore score(RawLocation.Record raw, Cities.Record city) {
-        double score = StringUtils.getJaroWinklerDistance(raw.cleanedLocation, city.stringValue);
+    protected static CityScore score(String rawString, Cities.Record city) {
+        double score = StringUtils.getJaroWinklerDistance(rawString, city.stringValue);
         return new CityScore(city, score);
     }
 
-    protected static CityScore bestScore(RawLocation.Record raw, List<Cities.Record> cities) {
+    protected static CityScore bestScore(String rawString, List<Cities.Record> cities) {
+        if (cities == null)
+            return new CityScore(null, -1);
+
         Optional<CityScore> maxScore = cities.stream()
-            .map(c -> score(raw, c))
+            .map(c -> score(rawString, c))
             .reduce(CityScore::max);
 
         if (maxScore.isPresent())

@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import java.util.Properties;
 
@@ -38,8 +40,10 @@ public class App
 
         String locationDatabase = config.getProperty("location.database");
         String locationPath = config.getProperty("location.path");
-        Connection conn = DriverManager.getConnection(
-                String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase));
+        String connectionString = String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase);
+        System.out.println("Connecting to geolocation database: " + connectionString);
+        Connection conn = DriverManager.getConnection(connectionString);
+        conn.setAutoCommit(false);
 
         double confidenceThreshold = 
             Double.parseDouble(config.getProperty("location.raw_google.confidence_threshold"));
@@ -56,7 +60,10 @@ public class App
         DriverManager.setLoginTimeout(10);
         Connection pdb = DriverManager.getConnection(url, user, password);
 
-        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, 1000000, 0);
+        int n = 100000;
+        System.out.format("Requesting %d records... ", n);
+        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, n, 0);
+        System.out.format("(got %d)\n", rawLocations.size());
 
         StopWatch watch = new StopWatch();
         watch.start();
@@ -65,6 +72,62 @@ public class App
         watch.stop();
         System.out.println("Elapsed time: " + watch);
 
+        System.out.print("Saving results to database... ");
+        prepareResultTable(conn);
+        saveResults(conn, rawLocations);
+        System.out.println("DONE");
+
         System.exit(0);
+    }
+
+    public static void prepareResultTable(Connection geodb) 
+        throws java.sql.SQLException
+    {
+        try (Statement stmt = geodb.createStatement()) {
+            stmt.execute("drop table if exists coded_locations");
+            stmt.execute(
+                    "create table coded_locations (" +
+                    "location_id text not null, " +
+                    "inventor_id text, " +
+                    "city text, " +
+                    "state text, " +
+                    "country text, " +
+                    "cleaned_location text, " +
+                    "cleaned_country text, " +
+                    "city_id integer)");
+
+            stmt.execute("create index coded_city_ix on coded_locations (city_id)");
+            geodb.commit();
+        }
+    }
+
+    public static void saveResults(Connection geodb, List<RawLocation.Record> rawLocations)
+        throws java.sql.SQLException
+    {
+        String sql =
+            "insert into coded_locations " +
+            "(location_id, inventor_id, city, state, country, cleaned_location, cleaned_country, city_id) " +
+            "values (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = geodb.prepareStatement(sql)) {
+            for (RawLocation.Record loc: rawLocations) {
+                pstmt.setString(1, loc.locationId);
+                pstmt.setString(2, loc.inventorId);
+                pstmt.setString(3, loc.city);
+                pstmt.setString(4, loc.state);
+                pstmt.setString(5, loc.country);
+                pstmt.setString(6, loc.cleanedLocation);
+                pstmt.setString(7, loc.cleanedCountry);
+
+                if (loc.linkedCity != null)
+                    pstmt.setInt(8, loc.linkedCity.id);
+                else
+                    pstmt.setNull(8, java.sql.Types.INTEGER);
+
+                pstmt.execute();
+            }
+
+            geodb.commit();
+        }
     }
 }
