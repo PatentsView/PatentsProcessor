@@ -30,6 +30,11 @@ public class Cities {
             this.longitude = longitude;
             this.stringValue = stringValue;
         }
+
+        @Override
+        public int hashCode() {
+            return id;
+        }
     }
 
     /**

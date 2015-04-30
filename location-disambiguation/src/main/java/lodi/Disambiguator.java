@@ -27,7 +27,6 @@ public class Disambiguator {
             double matchThreshold) 
         throws SQLException
     {
-
         System.out.print("Loading cities table... ");
         Cities cities = new Cities(conn);
         System.out.format("got %d records\n", cities.size());
@@ -35,6 +34,19 @@ public class Disambiguator {
         System.out.print("Loading google_cities table... ");
         GoogleCities goog = new GoogleCities(conn, googleConfidenceThreshold, cities);
         System.out.format("got %d records\n", goog.size());
+
+        disambiguate(cities, goog, rawLocations, googleConfidenceThreshold, matchThreshold);
+    }
+
+
+    public static void disambiguate(
+            Cities cities,
+            GoogleCities goog,
+            List<RawLocation.Record> rawLocations,
+            double googleConfidenceThreshold,
+            double matchThreshold) 
+    {
+
 
         ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
             rawLocations
@@ -111,6 +123,25 @@ public class Disambiguator {
             .collect(Collectors.toList());
 
         System.out.println("Count of identified locations (2nd pass): " + finalLinked.size());
+    }
+
+    /**
+     * Normalize locations in inventor portfolios. If the same city name appears multiple
+     * times for different US states, consolidate to the dominant state.
+     */
+    public static void normalizeInventor(List<RawLocation.Record> records) {
+        Map<Cities.Record, List<RawLocation.Record>> map =
+            records.stream()
+            .collect(Collectors.groupingBy(r -> r.linkedCity));
+
+        Map<String, List<Cities.Record>> cities =
+            map.keySet().stream()
+            .filter(c -> c.country.equalsIgnoreCase("US"))
+            .collect(Collectors.groupingBy(c -> c.city));
+
+        for (String cityName: cities.keySet()) {
+            
+        }
     }
 
     /**
