@@ -89,6 +89,9 @@ public class App
                     "create table coded_locations (" +
                     "location_id text not null, " +
                     "inventor_id text, " +
+                    "raw_city text, " +
+                    "raw_state text, " +
+                    "raw_country text, " +
                     "city text, " +
                     "state text, " +
                     "country text, " +
@@ -106,23 +109,27 @@ public class App
     {
         String sql =
             "insert into coded_locations " +
-            "(location_id, inventor_id, city, state, country, cleaned_location, cleaned_country, city_id) " +
-            "values (?, ?, ?, ?, ?, ?, ?, ?)";
+            "(location_id, inventor_id, raw_city, raw_state, raw_country, " +
+              "city, state, country, cleaned_location, cleaned_country, city_id) " +
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = geodb.prepareStatement(sql)) {
             for (RawLocation.Record loc: rawLocations) {
                 pstmt.setString(1, loc.locationId);
                 pstmt.setString(2, loc.inventorId);
-                pstmt.setString(3, loc.city);
-                pstmt.setString(4, loc.state);
-                pstmt.setString(5, loc.country);
-                pstmt.setString(6, loc.cleanedLocation);
-                pstmt.setString(7, loc.cleanedCountry);
+                pstmt.setString(3, loc.rawCity);
+                pstmt.setString(4, loc.rawState);
+                pstmt.setString(5, loc.rawCountry);
+                pstmt.setString(6, loc.city);
+                pstmt.setString(7, loc.state);
+                pstmt.setString(8, loc.country);
+                pstmt.setString(9, loc.cleanedLocation);
+                pstmt.setString(10, loc.cleanedCountry);
 
                 if (loc.linkedCity != null)
-                    pstmt.setInt(8, loc.linkedCity.id);
+                    pstmt.setInt(11, loc.linkedCity.id);
                 else
-                    pstmt.setNull(8, java.sql.Types.INTEGER);
+                    pstmt.setNull(11, java.sql.Types.INTEGER);
 
                 pstmt.execute();
             }

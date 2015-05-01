@@ -32,6 +32,7 @@ public class RawLocation {
         public final String city;
         public final String state;
         public final String country;
+        public final String rawCity, rawState, rawCountry;
 
         // the cleaned field used for matching
 
@@ -45,6 +46,9 @@ public class RawLocation {
         public Record(String locationId, String inventorId, String city, String state, String country) {
             this.locationId = locationId;
             this.inventorId = inventorId;
+            this.rawCity = city;
+            this.rawState = state;
+            this.rawCountry = country;
             
             if (city != null)
                 city = cleanRawLocation(city.trim());

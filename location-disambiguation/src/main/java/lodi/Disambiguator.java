@@ -130,9 +130,14 @@ public class Disambiguator {
      * times for different US states, consolidate to the dominant state.
      */
     public static void normalizeInventor(List<RawLocation.Record> records) {
+        // group rawlocation records by city
+
         Map<Cities.Record, List<RawLocation.Record>> map =
             records.stream()
+            .filter(r -> r.linkedCity != null && r.linkedCity.country.equalsIgnoreCase("US"))
             .collect(Collectors.groupingBy(r -> r.linkedCity));
+
+        // group the linked city records by city name
 
         Map<String, List<Cities.Record>> cities =
             map.keySet().stream()
@@ -140,7 +145,30 @@ public class Disambiguator {
             .collect(Collectors.groupingBy(c -> c.city));
 
         for (String cityName: cities.keySet()) {
-            
+            // Find the US state with the most instances of this city name
+
+            List<Cities.Record> cityStates = 
+                cities.get(cityName).stream()
+                .sorted((x, y) -> map.get(x).size() - map.get(y).size())
+                .collect(Collectors.toList());
+
+            if (cityStates.size() > 1) {
+                Cities.Record first = cityStates.get(0);
+                Cities.Record second = cityStates.get(1);
+
+                if (map.get(first).size() == map.get(second).size()) {
+                    throw new IllegalArgumentException(
+                            "City appears same number of times in two states");
+                }
+
+                // re-link raw-locations to first
+
+                cityStates.stream()
+                    .skip(1)
+                    .forEach(city -> {
+                        map.get(city).stream().forEach(loc -> loc.linkedCity = first);
+                    });
+            }
         }
     }
 
