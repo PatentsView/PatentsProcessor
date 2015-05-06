@@ -78,12 +78,12 @@ public class Disambiguator {
 
             List<RawLocation.Record> countryLocations = entry.getValue();
 
-            // group locations by unique cleanedLocation
+            // group locations by unique city
 
             Map<String, List<RawLocation.Record>> rawCities =
                 countryLocations
                 .stream()
-                .collect(Collectors.groupingBy(loc -> loc.cleanedLocation));
+                .collect(Collectors.groupingBy(loc -> loc.city));
 
             // get database cities from this country
 
@@ -199,9 +199,17 @@ public class Disambiguator {
         }
     }
 
-    protected static CityScore score(String rawString, Cities.Record city) {
-        double score = StringUtils.getJaroWinklerDistance(rawString, city.stringValue);
-        return new CityScore(city, score);
+    protected static CityScore score(String s, Cities.Record city) {
+        String t = city.city;
+        double scoreAdjust = 0.0;
+
+        if (t == null) {
+            t = city.region;
+            scoreAdjust = -0.05;
+        }
+
+        double score = StringUtils.getJaroWinklerDistance(s, t);
+        return new CityScore(city, score + scoreAdjust);
     }
 
     protected static CityScore bestScore(String rawString, List<Cities.Record> cities) {

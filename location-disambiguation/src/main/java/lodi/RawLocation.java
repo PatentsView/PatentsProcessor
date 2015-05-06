@@ -22,6 +22,39 @@ import org.jsoup.Jsoup;
  */
 public class RawLocation {
 
+    public static void testString(String text) {
+        System.out.println("Original: " + text);
+
+        text = eolPattern.matcher(text).replaceAll("");
+        System.out.println("Remove EOL: " + text);
+
+        text = separatorPattern.matcher(text).replaceAll(", ");
+        System.out.println("Replace separators: " + text);
+
+        text = manualReplacements.apply(text);
+        System.out.println("Manual replacements: " + text);
+
+        text = quickFix(text);
+        System.out.println("quick fix: " + text);
+
+        // remove XML/HTML tags
+        text = Jsoup.parseBodyFragment(text).text();
+        System.out.println("Remove XML: " + text);
+
+        // normalize unicode
+        text = Normalizer.normalize(text, Normalizer.Form.NFC);
+        System.out.println("Normalize UNICODE: " + text);
+
+        text = removePatterns.apply(text); 
+        System.out.println("Remove patterns: " + text);
+
+    }
+
+    public static void main(String[] args) {
+        testString("Uiwang-si");
+        testString("ELK GROVE");
+    }
+
     /**
      * A cleaned RawLocation record.
      */
@@ -256,7 +289,7 @@ public class RawLocation {
         PatternReplacements pr = null;  
 
         try (BufferedReader in = 
-                new BufferedReader(new InputStreamReader(url.openStream())))
+                new BufferedReader(new InputStreamReader(url.openStream(), "UTF8")))
         {
             pr = PatternReplacements.loadFromFile(in);
         }
