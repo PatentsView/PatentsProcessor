@@ -11,6 +11,9 @@ import java.util.TreeMap;
  */
 public class GoogleCities {
 
+    /**
+     * A struct representing a record from the google_cities table
+     */
     public static class Record {
         public final String inputString;
         public final double confidence;
@@ -24,6 +27,14 @@ public class GoogleCities {
         }
     }
 
+    /**
+     * Construct an in-memory copy of the google_cities table.
+     *
+     * @param confidenceThreshold Only records with a confidence value greater
+     * than this threshold will be loaded.
+     * @param cities A copy of the cities table. This is used to set up links from
+     * the google_cities table.
+     */
     public GoogleCities(Connection conn, double confidenceThreshold, Cities cities)
         throws SQLException
     {
@@ -53,14 +64,29 @@ public class GoogleCities {
         }
     }
 
+    /**
+     * Tests whether the given cleanedLocation appears as a known input location
+     * in the google cities table.
+     *
+     * @param cleanedLocation The cleaned input location to test
+     */
     public boolean containsKey(String cleanedLocation) {
         return map.containsKey(cleanedLocation);
     }
 
+    /**
+     * Returns the record matching the given input location.
+     *
+     * @param cleanedLocation The cleaned input location
+     * @return The google cities record matching the input location
+     */
     public Record get(String cleanedLocation) {
         return map.get(cleanedLocation);
     }
 
+    /**
+     * Returns the number of records in the table.
+     */
     public int size() {
         return map.size();
     }

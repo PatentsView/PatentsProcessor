@@ -10,12 +10,15 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * The location disambiguation algorithm
+ */
 public class Disambiguator {
 
     /**
      * Disambiguate the list of raw locations.
      *
-     * @param conn A connection to the geolocations database.
+     * @param conn A connection to the geolocation database.
      * @param rawLocations A list of raw location records to disambiguate
      * @param googleConfidenceThreshold The confidence threshold to use when loading the google table
      * @param matchThreshold The required match level when doing fuzzy-matching using Jaro-Winkler.
@@ -38,7 +41,15 @@ public class Disambiguator {
         disambiguate(cities, goog, rawLocations, googleConfidenceThreshold, matchThreshold);
     }
 
-
+    /**
+     * Disambiguation the list of raw locations.
+     *
+     * @param cities The cities table from the geolocation database
+     * @param goog The google_cities table from the geolocation database
+     * @param rawLocations A list of raw location records to disambiguate
+     * @param googleConfidenceThreshold The confidence threshold to use when loading the google table
+     * @param matchThreshold The required match level when doing fuzzy-matching using Jaro-Winkler.
+     */
     public static void disambiguate(
             Cities cities,
             GoogleCities goog,
@@ -47,6 +58,7 @@ public class Disambiguator {
             double matchThreshold) 
     {
 
+        // try looking up the cleaned, concatenated locations in teh google database
 
         ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
             rawLocations
@@ -56,8 +68,10 @@ public class Disambiguator {
         List<RawLocation.Record> identifiedLocations = splitLocations.get(true);
         List<RawLocation.Record> unidentifiedLocations = splitLocations.get(false);
 
-        // should be able to do this in the initial group-by, but the implemenation is ugly
-        // and I'm not sure it's enough of a performance gain to be worth it.
+        // For the raw locations that were found in the google table, link to the
+        // corresponding record from the city table. (It's possible to do this in the
+        // initial group-by, but the implemenation is ugly and I'm not sure it's enough of
+        // a performance gain to be worth it.
 
         identifiedLocations.parallelStream()
             .forEach(loc -> loc.linkedCity = goog.get(loc.cleanedLocation).city);
@@ -134,7 +148,7 @@ public class Disambiguator {
 
         Map<Cities.Record, List<RawLocation.Record>> map =
             records.stream()
-            .filter(r -> r.linkedCity != null && r.linkedCity.country.equalsIgnoreCase("US"))
+            .filter(r -> r.linkedCity != null && "US".equalsIgnoreCase(r.linkedCity.country))
             .collect(Collectors.groupingBy(r -> r.linkedCity));
 
         // group the linked city records by city name
@@ -185,6 +199,11 @@ public class Disambiguator {
         }
     }
 
+    /**
+     * This is a utility class used to represent a city object with a score attribute.
+     *
+     * @see #bestScore(String, List<Cities.Record>)
+     */
     protected static class CityScore {
         public final Cities.Record city;
         public final double score;
@@ -199,6 +218,15 @@ public class Disambiguator {
         }
     }
 
+    /**
+     * Compare a string to a city record and give the result as a {@link CityScore}
+     * object. The method tries to compare the input string to the city's "city"
+     * field, but if that field is null it falls back on the region field. The algorithm
+     * prefers to match to a city, however, and slightly penalizes comparisons to regions.
+     *
+     * @param s The name of a city to compare
+     * @param city The city object to compare to.
+     */
     protected static CityScore score(String s, Cities.Record city) {
         String t = city.city;
         double scoreAdjust = 0.0;
@@ -212,11 +240,20 @@ public class Disambiguator {
         return new CityScore(city, score + scoreAdjust);
     }
 
+    /**
+     * This method takes and input string and finds the best match from a list of cities.
+     *
+     * @param rawString The input city name
+     * @param cities A list of cities to compare to
+     *
+     * @return A CityScore object containing the best-matching city and its match score
+     */
     protected static CityScore bestScore(String rawString, List<Cities.Record> cities) {
         if (cities == null)
             return new CityScore(null, -1);
 
-        Optional<CityScore> maxScore = cities.stream()
+        Optional<CityScore> maxScore = 
+            cities.stream()
             .map(c -> score(rawString, c))
             .reduce(CityScore::max);
 

@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.text.Normalizer;
 
-import org.jsoup.Jsoup;
+import org.jsoup.Jsoup; // used to remove HTML tags
 
 /**
  * A raw location that needs to be disambiguated.
