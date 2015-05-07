@@ -1,6 +1,7 @@
 # postal pattern
 (- )?[A-Z\-#\(]*\d+[\)A-Z]*||u
 # foreign postal pattern
+# this regex is too broadly written
 # [A-Z\d]{3,4}[ ]?[A-Z\d]{3}||u
 
 # Remove unnecessary symbols/whitespace in excess of one space

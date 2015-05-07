@@ -1,7 +1,5 @@
 package lodi;
 
-import lodi.Disambiguator;
-
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
@@ -14,8 +12,7 @@ import java.util.Properties;
 import org.apache.commons.lang3.time.StopWatch;
 
 /**
- * Hello world!
- *
+ * The disambiguation application. 
  */
 public class App 
 {

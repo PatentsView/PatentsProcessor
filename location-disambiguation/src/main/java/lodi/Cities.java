@@ -53,6 +53,8 @@ public class Cities {
     {
         countryMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         stateMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        countryCityMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        stateCityMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         idMap = new TreeMap<>();
 
         try (Statement stmt = conn.createStatement()) {
@@ -77,21 +79,31 @@ public class Cities {
 
                 if (countryMap.containsKey(country)) {
                     countryMap.get(country).add(rec);
+                    countryCityMap.get(country).put(city, rec);
                 }
                 else {
                     LinkedList<Record> list = new LinkedList<>();
                     list.add(rec);
                     countryMap.put(country, list);
+
+                    TreeMap<String, Record> map = new TreeMap<>();
+                    map.put(city, rec);
+                    countryCityMap.put(country, map);
                 }
 
                 if ("US".equalsIgnoreCase(country)) {
                     if (stateMap.containsKey(region)) {
                         stateMap.get(region).add(rec);
+                        stateCityMap.get(region).put(city, rec);
                     }
                     else {
                         LinkedList<Record> list = new LinkedList<>();
                         list.add(rec);
                         stateMap.put(region, list);
+
+                        TreeMap<String, Record> map = new TreeMap<>();
+                        map.put(city, rec);
+                        stateCityMap.put(country, map);
                     }
                 }
             }
@@ -103,6 +115,21 @@ public class Cities {
      */
     public Record get(int id) {
         return idMap.get(id);
+    }
+
+    public Record getCityInCountry(String city, String country) {
+        if (!countryCityMap.containsKey(country))
+            return null;
+
+        return countryCityMap.get(country).get(city);
+    }
+
+    public Record getCityInState(String city, String state) {
+
+        if (!stateCityMap.containsKey(state))
+            return null;
+
+        return stateCityMap.get(state).get(city);
     }
 
     /**
@@ -134,5 +161,7 @@ public class Cities {
 
     private final TreeMap<String, LinkedList<Record>> countryMap;
     private final TreeMap<String, LinkedList<Record>> stateMap;
+    private final TreeMap<String, TreeMap<String, Record>> countryCityMap;
+    private final TreeMap<String, TreeMap<String, Record>> stateCityMap;
     private final TreeMap<Integer, Record> idMap;
 }

@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.TreeMap;
 
 /**
- * This class loads the entire raw_google database into memory for efficient lookups.
+ * A wrapper for the google_cities table in the geolocation database.
  */
 public class GoogleCities {
 
@@ -30,6 +30,7 @@ public class GoogleCities {
     /**
      * Construct an in-memory copy of the google_cities table.
      *
+     * @param conn Connection to the geolocation database
      * @param confidenceThreshold Only records with a confidence value greater
      * than this threshold will be loaded.
      * @param cities A copy of the cities table. This is used to set up links from
