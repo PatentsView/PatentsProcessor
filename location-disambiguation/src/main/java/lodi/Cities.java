@@ -2,8 +2,8 @@ package lodi;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
@@ -63,7 +63,7 @@ public class Cities {
                     "select id, city, region, country, latitude, longitude , string_value " +
                     "from cities " +
                     "where city <> '' or region <> ''");
-            
+
             while (rs.next()) {
                 int id = rs.getInt(1);
                 String city = rs.getString(2);
@@ -79,14 +79,16 @@ public class Cities {
 
                 if (countryMap.containsKey(country)) {
                     countryMap.get(country).add(rec);
-                    countryCityMap.get(country).put(city, rec);
+
+                    if (city != null)
+                        countryCityMap.get(country).put(city, rec);
                 }
                 else {
                     LinkedList<Record> list = new LinkedList<>();
                     list.add(rec);
                     countryMap.put(country, list);
 
-                    TreeMap<String, Record> map = new TreeMap<>();
+                    TreeMap<String, Record> map = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
                     map.put(city, rec);
                     countryCityMap.put(country, map);
                 }
@@ -102,8 +104,11 @@ public class Cities {
                         stateMap.put(region, list);
 
                         TreeMap<String, Record> map = new TreeMap<>();
-                        map.put(city, rec);
-                        stateCityMap.put(country, map);
+
+                        if (city != null)
+                            map.put(city, rec);
+
+                        stateCityMap.put(region, map);
                     }
                 }
             }

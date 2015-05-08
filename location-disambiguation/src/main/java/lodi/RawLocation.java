@@ -75,6 +75,7 @@ public class RawLocation {
         // linked City object
 
         public Cities.Record linkedCity;
+        public int linkCode;
 
         public Record(String locationId, String inventorId, String city, String state, String country) {
             this.locationId = locationId;
@@ -108,6 +109,7 @@ public class RawLocation {
             this.cleanedCountry = parts[parts.length - 1].trim();
 
             this.linkedCity = null;
+            this.linkCode = 0;
         }
 
         public Record(RawRecord raw) {

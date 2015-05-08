@@ -94,6 +94,7 @@ public class App
                     "country text, " +
                     "cleaned_location text, " +
                     "cleaned_country text, " +
+                    "link_code integer, " +
                     "city_id integer)");
 
             stmt.execute("create index coded_city_ix on coded_locations (city_id)");
@@ -107,8 +108,8 @@ public class App
         String sql =
             "insert into coded_locations " +
             "(location_id, inventor_id, raw_city, raw_state, raw_country, " +
-              "city, state, country, cleaned_location, cleaned_country, city_id) " +
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+              "city, state, country, cleaned_location, cleaned_country, link_code, city_id) " +
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = geodb.prepareStatement(sql)) {
             for (RawLocation.Record loc: rawLocations) {
@@ -122,11 +123,12 @@ public class App
                 pstmt.setString(8, loc.country);
                 pstmt.setString(9, loc.cleanedLocation);
                 pstmt.setString(10, loc.cleanedCountry);
+                pstmt.setInt(11, loc.linkCode);
 
                 if (loc.linkedCity != null)
-                    pstmt.setInt(11, loc.linkedCity.id);
+                    pstmt.setInt(12, loc.linkedCity.id);
                 else
-                    pstmt.setNull(11, java.sql.Types.INTEGER);
+                    pstmt.setNull(12, java.sql.Types.INTEGER);
 
                 pstmt.execute();
             }

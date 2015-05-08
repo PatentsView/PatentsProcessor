@@ -16,6 +16,21 @@ import org.apache.commons.lang3.StringUtils;
 public class Disambiguator {
 
     /**
+     * Exact match to input string in google database
+     */
+    public final static int CODE_GOOGLE = 1;
+
+    /**
+     * Exact match on city/state (for US cities) or city/country (for non-US cities)
+     */
+    public final static int CODE_EXACT_CITY = 2;
+
+    /**
+     * Fuzzy match on city name, blocked by state (for US cities) or country (for non-US cities)
+     */
+    public final static int CODE_FUZZY_CITY = 3;
+
+    /**
      * Disambiguate the list of raw locations.
      *
      * @param conn A connection to the geolocation database.
@@ -58,33 +73,66 @@ public class Disambiguator {
             double matchThreshold) 
     {
 
-        // try looking up the cleaned, concatenated locations in teh google database
+        // try looking up the cleaned, concatenated locations in the google database
 
-        ConcurrentMap<Boolean, List<RawLocation.Record>> splitLocations =
+        System.out.print("Google lookup... ");
+
+        rawLocations
+            .parallelStream()
+            .forEach(loc -> {
+                if (goog.containsKey(loc.cleanedLocation)) {
+                    loc.linkedCity = goog.get(loc.cleanedLocation).city;
+                    loc.linkCode = CODE_GOOGLE;
+                }
+            });
+
+        List<RawLocation.Record> unidentifiedLocations =
             rawLocations
             .parallelStream()
-            .collect(Collectors.groupingByConcurrent(loc -> goog.containsKey(loc.cleanedLocation)));
+            .filter(loc -> loc.linkedCity == null)
+            .collect(Collectors.toList());
 
-        List<RawLocation.Record> identifiedLocations = splitLocations.get(true);
-        List<RawLocation.Record> unidentifiedLocations = splitLocations.get(false);
-
-        // For the raw locations that were found in the google table, link to the
-        // corresponding record from the city table. (It's possible to do this in the
-        // initial group-by, but the implemenation is ugly and I'm not sure it's enough of
-        // a performance gain to be worth it.
-
-        identifiedLocations.parallelStream()
-            .forEach(loc -> loc.linkedCity = goog.get(loc.cleanedLocation).city);
-
-        int identifiedCount = (identifiedLocations == null) ? 0 : identifiedLocations.size();
-        System.out.println("Count of identified locations: " + identifiedCount);
+        int identifiedCount = rawLocations.size() - unidentifiedLocations.size();
+        System.out.println("(" + identifiedCount + " locations identified)");
 
         // handle unmatched locations
+
+        // perform exact match on city and state name
+
+        System.out.print("Exact match... ");
+        
+        unidentifiedLocations
+            .parallelStream()
+            .forEach(loc -> {
+                if ("US".equalsIgnoreCase(loc.country)) {
+                    loc.linkedCity = cities.getCityInState(loc.city, loc.state);
+
+                    if (loc.linkedCity != null)
+                        loc.linkCode = CODE_EXACT_CITY;
+                }
+                else {
+                    loc.linkedCity = cities.getCityInCountry(loc.city, loc.country);
+
+                    if (loc.linkedCity != null)
+                        loc.linkCode = CODE_FUZZY_CITY;
+                }
+            });
+
+        List<RawLocation.Record> unidentifiedLocations2 =
+            unidentifiedLocations
+            .parallelStream()
+            .filter(loc -> loc.linkedCity == null)
+            .collect(Collectors.toList());
+
+        identifiedCount = rawLocations.size() - unidentifiedLocations2.size();
+        System.out.println("(" + identifiedCount + " locations identified)");
         
         // group unidentified locations by country
 
+        System.out.println("Fuzzy city lookup...");
+
         ConcurrentMap<String, List<RawLocation.Record>> unidentifiedGroupedLocations =
-            unidentifiedLocations
+            unidentifiedLocations2
             .parallelStream()
             .collect(Collectors.groupingByConcurrent(Disambiguator::countryGroup));
 
@@ -104,9 +152,9 @@ public class Disambiguator {
             String country = entry.getKey();
             List<Cities.Record> cityList;
 
-            if (country.startsWith("::")) {
+            if (country.startsWith("US:")) {
                 // this "country" encodes a US state (see #countryGroup)
-                String state = country.substring(2);
+                String state = country.substring(3);
                 cityList = cities.getState(state);
             } else {
                 cityList = cities.getCountry(country);
@@ -136,7 +184,7 @@ public class Disambiguator {
             .filter(loc -> loc.linkedCity != null)
             .collect(Collectors.toList());
 
-        System.out.println("Count of identified locations (2nd pass): " + finalLinked.size());
+        System.out.println("Count of identified locations (final): " + finalLinked.size());
     }
 
     /**
@@ -192,7 +240,7 @@ public class Disambiguator {
      */
     protected static String countryGroup(RawLocation.Record loc) {
         if (loc.cleanedCountry.equalsIgnoreCase("US")) {
-            return String.format("::%s", loc.state);
+            return String.format("US:%s", loc.state);
         }
         else {
             return loc.cleanedCountry;
