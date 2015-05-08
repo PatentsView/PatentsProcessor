@@ -75,13 +75,17 @@ public class Cities {
 
                 Record rec = new Record(id, city, region, country, latitude, longitude, stringValue);
 
+                // This is to prevent null-pointer exceptions when using these values as hash keys
+
+                if (city == null) city = "";
+                if (region == null) region = "";
+                if (country == null) country = "";
+
                 idMap.put(id, rec);
 
                 if (countryMap.containsKey(country)) {
                     countryMap.get(country).add(rec);
-
-                    if (city != null)
-                        countryCityMap.get(country).put(city, rec);
+                    countryCityMap.get(country).put(city, rec);
                 }
                 else {
                     LinkedList<Record> list = new LinkedList<>();
@@ -104,10 +108,7 @@ public class Cities {
                         stateMap.put(region, list);
 
                         TreeMap<String, Record> map = new TreeMap<>();
-
-                        if (city != null)
-                            map.put(city, rec);
-
+                        map.put(city, rec);
                         stateCityMap.put(region, map);
                     }
                 }
@@ -123,7 +124,7 @@ public class Cities {
     }
 
     public Record getCityInCountry(String city, String country) {
-        if (!countryCityMap.containsKey(country))
+        if (city == null || country == null || !countryCityMap.containsKey(country))
             return null;
 
         return countryCityMap.get(country).get(city);
@@ -131,7 +132,7 @@ public class Cities {
 
     public Record getCityInState(String city, String state) {
 
-        if (!stateCityMap.containsKey(state))
+        if (city == null || state == null || !stateCityMap.containsKey(state))
             return null;
 
         return stateCityMap.get(state).get(city);

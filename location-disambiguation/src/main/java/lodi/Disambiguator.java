@@ -106,16 +106,13 @@ public class Disambiguator {
             .forEach(loc -> {
                 if ("US".equalsIgnoreCase(loc.country)) {
                     loc.linkedCity = cities.getCityInState(loc.city, loc.state);
-
-                    if (loc.linkedCity != null)
-                        loc.linkCode = CODE_EXACT_CITY;
                 }
                 else {
                     loc.linkedCity = cities.getCityInCountry(loc.city, loc.country);
-
-                    if (loc.linkedCity != null)
-                        loc.linkCode = CODE_FUZZY_CITY;
                 }
+
+                if (loc.linkedCity != null)
+                    loc.linkCode = CODE_EXACT_CITY;
             });
 
         List<RawLocation.Record> unidentifiedLocations2 =
@@ -145,6 +142,7 @@ public class Disambiguator {
             Map<String, List<RawLocation.Record>> rawCities =
                 countryLocations
                 .stream()
+                .filter(loc -> loc.city != null)
                 .collect(Collectors.groupingBy(loc -> loc.city));
 
             // get database cities from this country
@@ -174,7 +172,10 @@ public class Disambiguator {
                     CityScore cscore = bestScore(rawString, cityList);
 
                     if (cscore.score > matchThreshold && cscore.city.stringValue != country)
-                        rawCities.get(rawString).stream().forEach(loc -> loc.linkedCity = cscore.city);
+                        rawCities.get(rawString).stream().forEach(loc -> {
+                            loc.linkedCity = cscore.city;
+                            loc.linkCode = CODE_FUZZY_CITY;
+                        });
                 });
         }
 
