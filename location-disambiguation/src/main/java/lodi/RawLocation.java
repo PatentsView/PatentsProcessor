@@ -7,13 +7,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.Normalizer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.text.Normalizer;
 
 import org.jsoup.Jsoup; // used to remove HTML tags
 
@@ -128,7 +129,7 @@ public class RawLocation {
      * @return A list of {@link RawLocation} objects from the database
      */
     public static List<Record> load(
-            final Connection conn,
+            Connection conn,
             int limit,
             int offset) 
         throws SQLException
@@ -147,15 +148,7 @@ public class RawLocation {
             pstmt.setInt(1, offset);
             pstmt.setInt(2, limit);
             ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                String inventorId = rs.getString(1);
-                String locationId = rs.getString(2);
-                String city = rs.getString(3);
-                String state = rs.getString(4);
-                String country = rs.getString(5);
-                list.add(new RawRecord(locationId, inventorId, city, state, country));
-            }
+            loadResultSet(list, rs);
         }
 
         // convert raw records to cleaned records in parallel
@@ -167,6 +160,55 @@ public class RawLocation {
             .collect(Collectors.toList());
 
         return result;
+    }
+
+
+    /**
+     * Return a list of {@link RawLocation} objects from the database. The query must return
+     * a result set that can be processed by {@link #loadResultSet}.
+     *
+     * @param conn A database connection where the `rawlocation` table is found
+     * @param query A SQL query that returns raw location records from the database
+     * @return A list of {@link RawLocation} objects from the database
+     */
+    public static List<Record> load(Connection conn, String query) 
+        throws SQLException
+    {
+        LinkedList<RawRecord> list = new LinkedList<>();
+
+        try (Statement stmt = conn.createStatement()) {
+            ResultSet rs = stmt.executeQuery(query);
+            loadResultSet(list, rs);
+        }
+
+        // convert raw records to cleaned records in parallel
+
+        List<Record> result =
+            list
+            .parallelStream()
+            .map(Record::new)
+            .collect(Collectors.toList());
+
+        return result;
+    }
+
+    /**
+     * Load the records in the result set into the list. The records in the result set
+     * should contain raw location fields in the following order:
+     * {@code rawinventor.inventor_id}, {@code rawlocation.id}, {@code city},
+     * {@code state}, and {@code country_transformed}.
+     */
+    protected static void loadResultSet(List<RawRecord> list, ResultSet rs) 
+        throws SQLException
+    {
+        while (rs.next()) {
+            String inventorId = rs.getString(1);
+            String locationId = rs.getString(2);
+            String city = rs.getString(3);
+            String state = rs.getString(4);
+            String country = rs.getString(5);
+            list.add(new RawRecord(locationId, inventorId, city, state, country));
+        }
     }
 
     /**

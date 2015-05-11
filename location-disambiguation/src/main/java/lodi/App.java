@@ -16,6 +16,70 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class App 
 {
+
+    public static class Configuration {
+        public String locationDatabase;
+        public String patentDatabase;
+        public String patentDatabaseUser;
+        public String patentDatabasePass;
+
+        double googleConfidenceThreshold;
+        double fuzzyMatchThreshold;
+
+        @Override
+        public String toString() {
+            StringBuilder b = new StringBuilder("{\n");
+            b.append("  locationDatabase = ").append(locationDatabase).append("\n");
+            b.append("  patentDatabase = ").append(patentDatabase).append("\n");
+            b.append("  patentDatabaseUser = ").append(patentDatabaseUser).append("\n");
+            b.append("  patentDatabasePass = ").append(patentDatabasePass).append("\n");
+            b.append("  googleConfidenceThreshold = ").append(googleConfidenceThreshold).append("\n");
+            b.append("  fuzzyMatchThreshold = ").append(fuzzyMatchThreshold).append("\n");
+            b.append("}");
+
+            return b.toString();
+        }
+    }
+
+    public static Configuration loadConfiguration(String file) {
+        Properties prop = new Properties();
+        try {
+            prop.load(new FileReader(file));
+        }
+        catch(IOException e) {
+            System.out.println("There was a problem loading the configuration file '" + file + "'");
+            System.out.println(e);
+            System.exit(1);
+        }
+
+        Configuration config = new Configuration();
+
+        // build connection string for geolocation database
+
+        String locationDatabase = prop.getProperty("location.database");
+        String locationPath = prop.getProperty("location.path");
+        String connectionString = String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase);
+        config.locationDatabase = connectionString;
+
+        // get threshold values
+
+        config.googleConfidenceThreshold =
+            Double.parseDouble(prop.getProperty("location.raw_google.confidence_threshold"));
+
+        config.fuzzyMatchThreshold = Double.parseDouble(prop.getProperty("location.match_threshold"));
+
+        // build connection string for patent database
+
+        String host = prop.getProperty("mysql.host", "localhost");
+        String port = prop.getProperty("mysql.port", "3306");
+        String database = prop.getProperty("mysql.grant.database");
+        config.patentDatabase = String.format("jdbc:mysql://%s:%s/%s", host, port, database);
+        config.patentDatabaseUser = prop.getProperty("mysql.user");
+        config.patentDatabasePass = prop.getProperty("mysql.password");
+
+        return config;
+    }
+
     public static void main( String[] args )
         throws ClassNotFoundException, java.sql.SQLException
     {
@@ -24,38 +88,19 @@ public class App
             System.exit(1);
         }
 
-        Properties config = new Properties();
-        try {
-            config.load(new FileReader(args[0]));
-        } catch (IOException e) {
-            System.out.println("There was a problem loading the configuration file '" + args[0] + "'");
-            System.out.println(e);
-        }
+        Configuration config = loadConfiguration(args[0]);
+        System.out.println("Using configuration:");
+        System.out.println(config);
 
         Class.forName("com.mysql.jdbc.Driver");
         Class.forName("org.sqlite.JDBC");
 
-        String locationDatabase = config.getProperty("location.database");
-        String locationPath = config.getProperty("location.path");
-        String connectionString = String.format("jdbc:sqlite:%s/%s", locationPath, locationDatabase);
-        System.out.println("Connecting to geolocation database: " + connectionString);
-        Connection conn = DriverManager.getConnection(connectionString);
+        Connection conn = DriverManager.getConnection(config.locationDatabase);
         conn.setAutoCommit(false);
 
-        double confidenceThreshold = 
-            Double.parseDouble(config.getProperty("location.raw_google.confidence_threshold"));
-
-        double matchThreshold = Double.parseDouble(config.getProperty("location.match_threshold"));
-        
-        String host = config.getProperty("mysql.host", "localhost");
-        String port = config.getProperty("mysql.port", "3306");
-        String database = config.getProperty("mysql.grant.database");
-        String url = String.format("jdbc:mysql://%s:%s/%s", host, port, database);
-        String user = config.getProperty("mysql.user");
-        String password = config.getProperty("mysql.password");
-
         DriverManager.setLoginTimeout(10);
-        Connection pdb = DriverManager.getConnection(url, user, password);
+        Connection pdb = DriverManager.getConnection(
+                config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
 
         int n = 100000;
         System.out.format("Requesting %d records... ", n);
@@ -65,7 +110,12 @@ public class App
         StopWatch watch = new StopWatch();
         watch.start();
 
-        Disambiguator.disambiguate(conn, rawLocations, confidenceThreshold, matchThreshold);
+        Disambiguator.disambiguate(
+                conn, 
+                rawLocations, 
+                config.googleConfidenceThreshold, 
+                config.fuzzyMatchThreshold);
+
         watch.stop();
         System.out.println("Elapsed time: " + watch);
 
