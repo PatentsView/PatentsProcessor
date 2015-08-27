@@ -52,6 +52,11 @@
         <artifactId>jsoup</artifactId>
         <version>1.8.2</version>
     </dependency>
+    <dependency>
+    	<groupId>org.apache.lucene</groupId>
+    	<artifactId>lucene-suggest</artifactId>
+    	<version>5.2.1</version>
+    </dependency>
   </dependencies>
   
   <build>

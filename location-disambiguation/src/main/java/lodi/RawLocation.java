@@ -116,7 +116,9 @@ public class RawLocation {
         public Record(RawRecord raw) {
             this(raw.locationId, raw.inventorId, raw.city, raw.state, raw.country);
         }
-    }
+        
+    }    
+
 
     /**
      * Return a list of {@link RawLocation} objects from the database.
@@ -142,6 +144,7 @@ public class RawLocation {
             "from rawlocation " +
             "join rawinventor on rawinventor.rawlocation_id = rawlocation.id " +
             "where coalesce(city, state, country_transformed, '') <> '' " +
+            "order by country_transformed, state " +
             "limit ?, ?";
 
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -162,6 +165,49 @@ public class RawLocation {
         return result;
     }
 
+    /**
+     * Return a list of {@link RawLocation} objects from the database.
+     *
+     * @todo Check the query for correctness
+     *
+     * @param conn A database connection where the `rawlocation` table is found
+     * @param limit The number of records to return
+     * @param offset The offset into the database table to use
+     * @return A list of {@link RawLocation} objects from the database
+     */
+    public static List<Record> load(
+            Connection conn,
+            String leftId,
+            String rightId) 
+        throws SQLException
+    {
+        LinkedList<RawRecord> list = new LinkedList<>();
+
+        String sql = 
+            "select rawinventor.inventor_id, rawlocation.id, " +
+            "       city, state, country_transformed " +
+            "from rawlocation " +
+            "join rawinventor on rawinventor.rawlocation_id = rawlocation.id " +
+            "where coalesce(city, state, country_transformed, '') <> '' " +
+            "and ? <= inventor_id and inventor_id < ? ";
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, leftId);
+            pstmt.setString(2, rightId);
+            ResultSet rs = pstmt.executeQuery();
+            loadResultSet(list, rs);
+        }
+
+        // convert raw records to cleaned records in parallel
+
+        List<Record> result =
+            list
+            .parallelStream()
+            .map(Record::new)
+            .collect(Collectors.toList());
+
+        return result;
+    }
 
     /**
      * Return a list of {@link RawLocation} objects from the database. The query must return

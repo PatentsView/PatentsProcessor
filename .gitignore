@@ -48,3 +48,5 @@ dump.rdb # redis dump
 .idea/
 mid.txt
 .metadata
+.recommenders
+location-dismabiguation/geolocation_data/

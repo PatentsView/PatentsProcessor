@@ -5,8 +5,13 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -16,6 +21,14 @@ import org.apache.commons.lang3.time.StopWatch;
  */
 public class App 
 {
+	// number of records to get a a time
+	public final static int CHUNK = 2000000;
+	
+	// start index of raw locations
+	public final static int START_OFFSET = 0;
+	
+	// whether to create an empty table to store results
+	public final static boolean PREPARE_RESULT_TABLE = true;
 
     public static class Configuration {
         public String locationDatabase;
@@ -80,7 +93,7 @@ public class App
         return config;
     }
 
-    public static void main( String[] args )
+    public static void main( String[] args)
         throws ClassNotFoundException, java.sql.SQLException
     {
         if (args.length < 1) {
@@ -97,33 +110,170 @@ public class App
 
         Connection conn = DriverManager.getConnection(config.locationDatabase);
         conn.setAutoCommit(false);
+        
+        if (PREPARE_RESULT_TABLE)
+        	prepareResultTable(conn);
 
         DriverManager.setLoginTimeout(10);
         Connection pdb = DriverManager.getConnection(
                 config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
+        pdb.setAutoCommit(false);
+        
+        // get total number of records
+        Statement stmt = pdb.createStatement();
+        ResultSet rs = stmt.executeQuery("select count(*) from rawlocation where coalesce(city, state, country_transformed, '') <> ''");
+        rs.next();
+        int total = rs.getInt(1);
+        
+        // get total number of inventors
+        rs = stmt.executeQuery(
+        		"select count(distinct inventor_id) " +
+        		"from rawinventor " +
+        		"join rawlocation on rawlocation.id = rawinventor.rawlocation_id " +
+        		"where coalesce(city, state, country_transformed, '') <> '' ");
+        rs.next();
+        int totalInventors = rs.getInt(1);
+        
+        double patentsPerInventor = (total + 0.0) / totalInventors;
+        int inventorChunkSize = (int)(CHUNK / patentsPerInventor);
+        int nBreaks = totalInventors / inventorChunkSize;
+        
+        System.out.format("Total patents = %d\n", total);
+        System.out.format("Total inventors = %d\n", totalInventors);
+        System.out.format("Patents per inventor = %f\n", patentsPerInventor);
+        System.out.format("Inventor chunk size = %d\n", inventorChunkSize);
+        System.out.format("Number of breaks = %d\n", nBreaks);
+        
+        // get inventor breaks
+        ArrayList<String> idBreaks = new ArrayList<>();
+        
+        rs = stmt.executeQuery(
+        		"select distinct inventor_id " +
+        		"from rawinventor " +
+        		"join rawlocation on rawlocation.id = rawinventor.rawlocation_id " +
+        		"where coalesce(city, state, country_transformed, '') <> '' " +
+        		"and inventor_id is not null " +
+        		"order by 1");
+        
+        int i = 0;
+        while(rs.next()) {
+        	if (i % inventorChunkSize == 0)
+        		idBreaks.add(rs.getString(1));
+        	
+        	i++;
+        }
+        
+        // this "inventor ID" should come after all valid inventor IDs in sort order
+        idBreaks.add("ZZZZZZZZZZZZZZZZZZZZ"); 
+        
+        System.out.print("Loading cities table... ");
+        Cities cities = new Cities(conn);
+        System.out.format("got %d records\n", cities.size());
 
-        int n = 100000;
-        System.out.format("Requesting %d records... ", n);
-        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, n, 0);
+        System.out.print("Loading google_cities table... ");
+        GoogleCities goog = new GoogleCities(conn, config.googleConfidenceThreshold, cities);
+        System.out.format("got %d records\n", goog.size());
+        
+        Map<String, Cities.Record> linkCache = new HashMap<>();
+        
+        for (i = 0; i < idBreaks.size() - 1; i++) {
+
+        	String leftId = idBreaks.get(i);
+        	String rightId = idBreaks.get(i + 1);
+	        System.out.format("Requesting records for inventors %s through %s... \n", leftId, rightId);
+	        
+	        // test to see if the connection is still alive and reconnect if it's not
+	        
+	        try {
+	        	stmt.executeQuery("select 1");
+	        }
+	        catch(SQLException e) {
+	        	pdb = DriverManager.getConnection(
+	                    config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
+	        	pdb.setAutoCommit(false);
+	        }
+	        
+	        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, leftId, rightId);
+	        
+	        System.out.format("(got %d)\n", rawLocations.size());
+	
+	        StopWatch watch = new StopWatch();
+	        watch.start();
+	
+	        Disambiguator.disambiguate(
+	                cities,
+	                goog,
+	                rawLocations, 
+	                config.googleConfidenceThreshold, 
+	                config.fuzzyMatchThreshold,
+	                linkCache);
+	
+	        watch.stop();
+	        System.out.println("Elapsed time: " + watch);
+	        
+	        try {
+	        	stmt.executeQuery("select 1");
+	        }
+	        catch(SQLException e) {
+	        	pdb = DriverManager.getConnection(
+	                    config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
+	        	pdb.setAutoCommit(false);
+	        }
+	
+	        System.out.println("Saving results to database... ");
+	        saveResultsToPatentDatabase(pdb, rawLocations);
+        }
+        
+        // handle null inventors
+        System.out.format("Requesting records for inventors with null inventor_id... \n");
+        
+        try {
+        	stmt.executeQuery("select 1");
+        }
+        catch(SQLException e) {
+        	pdb = DriverManager.getConnection(
+                    config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
+        }
+        
+        String sql = 
+                "select rawinventor.inventor_id, rawlocation.id, " +
+                "       city, state, country_transformed " +
+                "from rawlocation " +
+                "join rawinventor on rawinventor.rawlocation_id = rawlocation.id " +
+                "where coalesce(city, state, country_transformed, '') <> '' " +
+                "and inventor_id is null";
+        
+        List<RawLocation.Record> rawLocations = RawLocation.load(pdb, sql);
+        
         System.out.format("(got %d)\n", rawLocations.size());
 
         StopWatch watch = new StopWatch();
         watch.start();
 
         Disambiguator.disambiguate(
-                conn, 
+                cities,
+                goog,
                 rawLocations, 
                 config.googleConfidenceThreshold, 
-                config.fuzzyMatchThreshold);
+                config.fuzzyMatchThreshold,
+                linkCache);
 
         watch.stop();
         System.out.println("Elapsed time: " + watch);
+        
+        try {
+        	stmt.executeQuery("select 1");
+        }
+        catch(SQLException e) {
+        	pdb = DriverManager.getConnection(
+                    config.patentDatabase, config.patentDatabaseUser, config.patentDatabasePass);
+        	pdb.setAutoCommit(false);
+        }
 
-        System.out.print("Saving results to database... ");
-        prepareResultTable(conn);
-        saveResults(conn, rawLocations);
+        System.out.println("Saving results to database... ");
+        saveResultsToPatentDatabase(pdb, rawLocations);
+        
         System.out.println("DONE");
-
         System.exit(0);
     }
 
@@ -185,5 +335,26 @@ public class App
 
             geodb.commit();
         }
+    }
+    
+    public static void saveResultsToPatentDatabase(Connection patdb, List<RawLocation.Record> rawLocations)
+    	throws java.sql.SQLException
+    {
+    	String sql =
+    			"update rawlocation " +
+    			"set location_id = ? " +
+    			"where id = ?";
+    	
+    	try (PreparedStatement pstmt = patdb.prepareStatement(sql)) {
+    		for (RawLocation.Record loc: rawLocations) {
+    			if (loc.linkedCity != null) {
+    				pstmt.setInt(1, loc.linkedCity.id);
+    				pstmt.setString(2, loc.locationId);
+    				pstmt.execute();
+    			}
+    		}
+    		
+    		patdb.commit();
+    	}
     }
 }
