@@ -1,5 +1,25 @@
 # Location Disambiguation
 
+## Running the code
+
+The program can be built and run using [maven](https://maven.apache.org/). Maven is not required, but it will handle downloading dependencies and setting the classpath, To run the program you need a configuration file with the following entries.
+
+	mysql.host = <URL to ingest database server>
+	mysql.user = <user name on ingest database>
+	mysql.password = <password on ingest database>
+	mysql.grant.database = <database containing the rawlocations table to disambiguate>
+	
+	location.database = <sqlite database containing geolocation data>
+	location.path = <path to the geolocation database>
+	location.raw_google.confidence_threshold = <threshold to use when matching to google database>
+	location.match_threshold = <threshold to use for fuzzy string matching>
+	
+Then, assuming the configuration file is named `config.properties`, you can run the program by calling:
+
+	mvn exec:java -Dexec.mainClass=lodi.App -Dexec.args=config.properties
+
+	
+
 ## Cleaning Raw Locations
 
 Raw locations are taken from the database. For each raw location, the following
