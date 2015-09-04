@@ -37,11 +37,6 @@ public class Disambiguator {
     public final static int CODE_STATE_FIELD_CONTAINS_COUNTRY = 4;
     
     /**
-     * Matched city was adjusted during inventor portfolio normalization.
-     */
-    public final static int CODE_NORMALIZE_INVENTOR = 5;
-    
-    /**
      * An object to compute Jaro-Winkler distances using default parameters
      */
     public final static JaroWinklerDistance JW = new JaroWinklerDistance();
@@ -285,20 +280,7 @@ public class Disambiguator {
                         });
                 });
         }
-        
-        // normalize inventor portfolios
-        
-        System.out.println("Normalize inventor portfolios");
-        
-        ConcurrentMap<String, List<RawLocation.Record>> inventors =
-        		rawLocations
-        		.parallelStream()
-        		.filter(loc -> loc.inventorId != null)
-        		.collect(Collectors.groupingByConcurrent(loc -> loc.inventorId));
-        
-        for (String inventorId: inventors.keySet()) {
-        	normalizeInventor(inventorId, inventors.get(inventorId));
-        }
+
         		
         // finalize
 
@@ -330,51 +312,7 @@ public class Disambiguator {
     	disambiguate(cities, goog, rawLocations, googleConfidenceThreshold, matchThreshold, new HashMap<String, Cities.Record>());
     }
 
-    /**
-     * Normalize locations in inventor portfolios. If the same city name appears multiple
-     * times for different US states, consolidate to the dominant state.
-     */
-    public static void normalizeInventor(String inventorId, List<RawLocation.Record> records) {
-        // group rawlocation records by city
 
-        Map<Cities.Record, List<RawLocation.Record>> map =
-            records.stream()
-            .filter(r -> r.linkedCity != null && "US".equalsIgnoreCase(r.linkedCity.country))
-            .collect(Collectors.groupingBy(r -> r.linkedCity));
-
-        // group the linked city records by city name
-
-        Map<String, List<Cities.Record>> cities =
-            map.keySet().stream()
-            .filter(c -> c.country.equalsIgnoreCase("US") && c.city != null)
-            .collect(Collectors.groupingBy(c -> c.city));
-
-        for (String cityName: cities.keySet()) {
-            // Find the US state with the most instances of this city name33
-
-            List<Cities.Record> cityStates = 
-                cities.get(cityName).stream()
-                .sorted((x, y) -> map.get(y).size() - map.get(x).size())
-                .collect(Collectors.toList());
-
-            if (cityStates.size() > 1) {
-                Cities.Record first = cityStates.get(0);
-                Cities.Record second = cityStates.get(1);
-
-                if (map.get(first).size() == map.get(second).size()) {
-                    System.err.format("Can't disambiguate inventor portfolio for %s\n", inventorId);
-                }
-                else {
-	                // re-link raw-locations to first
-	                cityStates.stream()
-	                    .skip(1)
-	                    .forEach(city -> {
-	                        map.get(city).stream().forEach(loc -> loc.linkedCity = first);
-	                    });
-                }
-            }
-        }
-    }
 
     /**
      * Create a special "country" code for US states. This is used when splitting up the

@@ -97,7 +97,7 @@ public class App
         throws ClassNotFoundException, java.sql.SQLException
     {
         if (args.length < 1) {
-            System.out.println("Usage: java -jar lodi.jar CONFIG_FILE");
+            System.out.println("Usage: need to specify configuration file");
             System.exit(1);
         }
 
