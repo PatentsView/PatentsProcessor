@@ -135,7 +135,7 @@ def associate_prefix(firstname, lastname):
     last = prefix+space+lastname
     return name, last
 
-def clean(string, upper=True):
+def clean(string, upper=True, trim=True):
     """
     Applies a subset of the above functions in the correct order
     and returns the string in all uppercase.
@@ -143,7 +143,10 @@ def clean(string, upper=True):
     Change &amp;
     """
     string = normalize_utf8(string)
-    string = remove_escape_sequences(string)
+    if trim:
+        string = remove_escape_sequences(string)
+    else:
+        string = string.rstrip() # Preserve leading spaces
     string = translate_underscore(string)
     string = escape_html(string)
     string = string.replace("&nbsp;", " ").replace("&amp;", "&")
