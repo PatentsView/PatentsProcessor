@@ -75,7 +75,7 @@ def isgrant(obj):
     """
     returns True of obj is from Grant table, False if from App table
     """
-    return hasattr(obj, 'patent')
+    return hasattr(obj, 'patent_id')
 
 def get_cleanid(obj):
     """
