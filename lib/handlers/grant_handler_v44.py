@@ -375,7 +375,7 @@ class Patent(PatentHandler):
         """
         classes = []
         i = 0
-        main = self.xml.classification_national.contents_of('main_classification')
+        main = self.xml.classification_national.contents_of('main_classification', trim=False)
         crossrefsub = main[0][3:].replace(" ","")
         if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:
             crossrefsub = crossrefsub[:3]+'.'+crossrefsub[3:]
@@ -392,7 +392,7 @@ class Patent(PatentHandler):
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
         if self.xml.classification_national.further_classification:
-            further = self.xml.classification_national.contents_of('further_classification')
+            further = self.xml.classification_national.contents_of('further_classification', trim=False)
             for classification in further:
                 crossrefsub = classification[3:].replace(" ","")
                 if len(crossrefsub) > 3 and re.search('^[A-Z]',crossrefsub[3:]) is None:

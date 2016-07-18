@@ -248,7 +248,7 @@ class Patent(PatentHandler):
         """
         classes = []
         i = 0
-        main = self.xml.classification_national.contents_of('main_classification')
+        main = self.xml.classification_national.contents_of('main_classification', trim=False)
         if re.search('^\s+\d{3,4}$',main[0]):
             mainidx = 2
         else:
@@ -268,7 +268,7 @@ class Patent(PatentHandler):
                 {'id': "{class}/{subclass}".format(**data).upper()}])
             i = i + 1
         if self.xml.classification_national.further_classification:
-            further = self.xml.classification_national.contents_of('further_classification')
+            further = self.xml.classification_national.contents_of('further_classification', trim=False)
             for classification in further:
                 if re.search('^\s+\d{3,4}$',classification):
                     mainidx = 2

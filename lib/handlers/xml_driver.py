@@ -46,10 +46,10 @@ class ChainList(list):
     a list in order to traverse the tree.
     """
 
-    def contents_of(self, tag, default=[''], as_string=False, upper=True):
+    def contents_of(self, tag, default=[''], as_string=False, upper=True, trim=True):
         res = []
         for item in self:
-            res.extend(item.contents_of(tag, upper=upper))
+            res.extend(item.contents_of(tag, upper=upper, trim=trim))
         if as_string:
             res = [r for r in res if type(r).__name__ not in ('tuple', 'list')]
             return ' '.join(res) if res else ''
@@ -106,10 +106,10 @@ class XMLElement(object):
         else:
             return ChainList('')
 
-    def contents_of(self, key, default=ChainList(''), as_string=False, upper=True):
+    def contents_of(self, key, default=ChainList(''), as_string=False, upper=True, trim=True):
         candidates = self.__getattr__(key)
         if candidates:
-            res = [x.get_content(upper=upper) for x in candidates]
+            res = [x.get_content(upper=upper, trim=trim) for x in candidates]
         else:
             res = default
         if as_string:
@@ -123,11 +123,11 @@ class XMLElement(object):
             return ' '.join(filter(lambda x: x, filter(lambda x: not isinstance(x, list), res)))
         return res
 
-    def get_content(self, upper=True):
+    def get_content(self, upper=True, trim=True):
         if len(self.content) == 1:
-            return xml_util.clean(self.content[0], upper=upper)
+            return xml_util.clean(self.content[0], upper=upper, trim=trim)
         else:
-            return map(functools.partial(xml_util.clean, upper=upper), self.content)
+            return map(functools.partial(xml_util.clean, upper=upper, trim=trim), self.content)
 
     def put_content(self, content, lastlinenumber, linenumber):
         if not self.content or lastlinenumber != linenumber:
@@ -138,8 +138,8 @@ class XMLElement(object):
     def add_child(self, child):
         self.children.append(child)
 
-    def get_attribute(self, key, upper=True):
-        return xml_util.clean(self._attributes.get(key, None), upper=upper)
+    def get_attribute(self, key, upper=True, trim=True):
+        return xml_util.clean(self._attributes.get(key, None), upper=upper, trim=trim)
 
     def get_xmlelements(self, name):
         return filter(lambda x: x._name == name, self.children) \
